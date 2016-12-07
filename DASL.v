@@ -174,11 +174,6 @@ Axiom distribution : forall p1 p2 p3 p4,
     |-- ((p1==>p2)&(p3==>p4)) <->
     |-- ((p1&p3)==>(p2&p4)).
 
-(*Lemma CP : forall p1 p2,
-      (|-- p1 -> |-- p2) -> |-- (p1 ==> p2).
-Proof.
-intros. apply (MP p2). econstructor. apply H. *)
-
 
 Axiom global_atms : forall (m: Mode) (rl : Readings Left) (rm : Readings Middle) (rr : Readings Right),
              |-- (atm (InstrumentsG (Global m rl rm rr)) <=> atm (M m) & atm (InstrumentL rl) & atm (InstrumentM rm) & atm (InstrumentR rr)).
@@ -211,7 +206,6 @@ Lemma safe_act_pre : forall (A Ao : Agents) (pi : PI) (inp : Inputs) (m: Mode) (
 Proof. intros.  pose proof safe_act_pre_CP A Ao pi0 inp m rl rm rr ms rls rms rrs phi. econstructor. eassumption. eassumption.
 Qed.
 
-Axiom taut_imp : forall (p:prop), |--p -> |--p.
 
 Lemma pre_equals_pre : forall (A Ao : Agents) (pi : PI) (inp : Inputs) (m : Mode) (rl : Readings Left) (rm : Readings Middle) (rr : Readings Right) (ms : Mode) (rls : Readings Left) (rms : Readings Middle) (rrs : Readings Right),
       |-- pre(act A Ao pi inp (Global m rl rm rr) (Global ms rls rms rrs)) ->
