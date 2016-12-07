@@ -87,7 +87,6 @@ Inductive theorem : prop -> Prop :=
    |K_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (K a p)
    |K_K : forall (a : Agents) (p q : prop), theorem (K a p ==> K a (p ==> q) ==> K a q)
    |K_T : forall (a : Agents) (p : prop), theorem (K a p ==> p)
-   |K_4 : forall (a : Agents) (p : prop), theorem (K a p ==> K a (K a p))
    |B_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (B a p)
    |B_K : forall (a : Agents) (p q : prop), theorem (B a p ==> B a (p ==> q) ==> B a q)
    |B_Serial : forall (a : Agents) (p : prop), theorem (B a p ==> NOT (B a (NOT p)))
