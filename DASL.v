@@ -27,12 +27,6 @@ Inductive Atoms : Set :=
           | InstrumentR (r : Readings Right)
           | InstrumentsG (g : GlobalReadings).
 
-Definition sideof (p : Agents) := match p with
-                                    |Pilot => Left
-                                    |CoPilot => Right
-                                    |AutoPilot => Middle
-                                  end.
-
 
 Inductive prop : Set :=
    | atm : Atoms -> prop
