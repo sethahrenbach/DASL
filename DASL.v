@@ -329,14 +329,14 @@ Definition Input1 := act Pilot Pilot Pri HardNoseUp
 
 Definition Act_1 :=  NOT (aft_ex_act Input1 (NOT TRUE)).
                  
-Theorem NegIntroFailMode : |-- (Config_1 ==> Act_1 ==>((NOT (K Pilot (pre_s(Action1))))
-                                  & (NOT (K Pilot (NOT (K Pilot (pre_s(Action1)))))))).
-Proof. unfold Act_1. unfold Config_1. unfold pre_s. unfold Action1. simpl. fold Action1.
-assert (|-- (Config_1 ==> NOT (pre_s(Action1)))).
-unfold Config_1. unfold Action1. unfold pre_s. simpl. pose proof atoms_consistent (InstrumentsG (Global Alternate2 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedCruise Right)))
+Theorem NegIntroFailMode : |-- (Config_1 ==> Act_1 ==>((NOT (K Pilot (pre_s(Input1))))
+                                  & (NOT (K Pilot (NOT (K Pilot (pre_s(Input1)))))))).
+Proof. unfold Act_1. unfold Config_1. unfold pre_s. unfold Input1. simpl. fold Input1.
+assert (|-- (Config_1 ==> NOT (pre_s(Input1)))).
+unfold Config_1. unfold Input1. unfold pre_s. simpl. pose proof atoms_consistent (InstrumentsG (Global Alternate2 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedCruise Right)))
                                                                                   (InstrumentsG (Global Normal (AirspeedCruise Left) (AirspeedCruise Middle) (AirspeedCruise Right))) .
 match goal with [H: ?p -> |--?q|-_]=>assert(p)end. unfold not. intros. inversion H0. pose proof H H0. clear H H0.
 unfold EQUIV in H1. eapply simplifyL in H1. pose proof global_atms Alternate2 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedCruise Right). unfold EQUIV in H. eapply simplifyR in H. Htrans. assumption.
-unfold Config_1 in H. unfold Action1 in H. unfold pre_s in H. simpl in H.
+unfold Config_1 in H. unfold Input1 in H. unfold pre_s in H. simpl in H.
  eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
 Qed.
