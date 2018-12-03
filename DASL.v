@@ -81,19 +81,23 @@ Inductive theorem : prop -> Prop :=
    |K_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (K a p)
    |K_K : forall (a : Agents) (p q : prop), theorem (K a p ==> K a (p ==> q) ==> K a q)
    |K_T : forall (a : Agents) (p : prop), theorem (K a p ==> p)
-   |B_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (B a p)
+(*    |B_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (B a p) *)
    |B_K : forall (a : Agents) (p q : prop), theorem (B a p ==> B a (p ==> q) ==> B a q)
    |B_Serial : forall (a : Agents) (p : prop), theorem (B a p ==> NOT (B a (NOT p)))
-   |B_4 : forall (a : Agents) (p : prop), theorem (B a p ==> B a (B a p))
-   |B_5 : forall (a : Agents) (p : prop), theorem (NOT (B a p) ==> B a (NOT (B a p)))
+(*    |B_4 : forall (a : Agents) (p : prop), theorem (B a p ==> B a (B a p)) *)
+(*    |B_5 : forall (a : Agents) (p : prop), theorem (NOT (B a p) ==> B a (NOT (B a p))) *)
    |K_B : forall (a : Agents) (p : prop), theorem (K a p ==> B a p)
    |B_BK : forall (a : Agents) (p : prop), theorem (B a p ==> B a (K a p))
-   |Fix_Ck : forall (G : list Agents) (p q : prop), theorem (Ck G p ==> p & Ek G (Ck G p))
+  (*  |Fix_Ck : forall (G : list Agents) (p q : prop), theorem (Ck G p ==> p & Ek G (Ck G p))
    |Fix_Cb : forall (G : list Agents) (p q : prop), theorem (Cb G p ==> Eb G (Cb G p))
    |Least_Fix_Ck : forall (G : list Agents) (p q : prop), theorem (q ==> p & Ek G q) -> theorem (q ==> Ck G p)
-   |Least_Fix_Cb : forall (G : list Agents) (p q : prop), theorem (q ==> p & Eb G q) -> theorem (q ==> Cb G p).
+   |Least_Fix_Cb : forall (G : list Agents) (p q : prop), theorem (q ==> p & Eb G q) -> theorem (q ==> Cb G p) *).
 
 Notation "|-- p" := (theorem p) (at level 80).
+Theorem B_Nec : forall (a : Agents) (p : prop), theorem p -> theorem (B a p).
+Proof.
+intros a p. intro H0. pose proof K_B. eapply MP. apply (H a p). apply K_Nec. assumption. Qed. 
+
 
 Axiom double_negation_NN : forall p,
        |-- (NOT (NOT p)) -> |-- p.
