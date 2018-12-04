@@ -353,3 +353,18 @@ Definition Config_2 := (atm (M Normal))
 Definition Input2 := act Pilot Pilot Pri HardWingRight
                       (Global Normal (HorLeft2 Left) (HorLevel Middle) (HorLevel Right))
                       (Global Normal (HorLeft2 Left) (HorLeft2 Middle) (HorLeft2 Right)).
+
+Definition Act_2 := NOT (aft_ex_act Input2 (NOT TRUE)).
+
+Theorem NegIntroFailHorLevel : |-- (Config_2 ==> Act_2 ==>((NOT (K Pilot (pre_s(Input2))))
+                                   & (NOT (K Pilot (NOT (K Pilot (pre_s(Input2)))))))).
+Proof. unfold Act_2. unfold Config_2. unfold pre_s. unfold Input2. simpl. fold Input2.
+assert (|-- (Config_2 ==> NOT (pre_s(Input2)))).
+unfold Config_2. unfold Input2. unfold pre_s. simpl. pose proof atoms_consistent (InstrumentsG (Global Normal (HorLeft2 Left) (HorLevel Middle) (HorLevel Right)))
+                                                                                  (InstrumentsG (Global Normal (HorLeft2 Left) (HorLeft2 Middle) (HorLeft2 Right))).
+match goal with [H: ?p -> |--?q|-_]=>assert(p)end. unfold not. intros. inversion H0. pose proof H H0. clear H H0.
+unfold EQUIV in H1. eapply simplifyL in H1. pose proof global_atms Normal (HorLeft2 Left) (HorLevel Middle) (HorLevel Right). unfold EQUIV in H. eapply simplifyR in H. Htrans. assumption.
+unfold Config_2 in H. unfold Input1 in H. unfold pre_s in H. simpl in H.
+ eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
+Qed.
+
