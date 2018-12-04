@@ -368,3 +368,28 @@ unfold Config_2 in H. unfold Input1 in H. unfold pre_s in H. simpl in H.
  eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
 Qed.
 
+Definition Config_3 := (atm (M Alternate1))
+                       & (atm (InstrumentL (AirspeedSlow3 Left)))
+                       & (atm (InstrumentM (AirspeedSlow3 Middle)))
+                       & (atm (InstrumentR (AirspeedSlow3 Right))).
+
+Definition Input3 := act Pilot Pilot Pri HardThrustMinus
+                     (Global Alternate1 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedSlow3 Right))
+                     (Global Normal (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedSlow3 Right)).
+
+Definition Act_3 := NOT (aft_ex_act Input3 (NOT TRUE)).
+
+Theorem NegIntroFailATOff : |-- (Config_3 ==> Act_3 ==>((NOT (K Pilot (pre_s(Input3))))
+                                   & (NOT (K Pilot (NOT (K Pilot (pre_s(Input3)))))))).
+Proof. unfold Act_3. unfold Config_3. unfold pre_s. unfold Input3. simpl. fold Input3.
+assert (|-- (Config_3 ==> NOT (pre_s(Input3)))).
+unfold Config_3. unfold Input3. unfold pre_s. simpl. 
+pose proof atoms_consistent (InstrumentsG (Global Alternate1 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedSlow3 Right)))
+                            (InstrumentsG (Global Normal (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedSlow3 Right))).
+match goal with [H: ?p -> |--?q|-_]=>assert(p)end. unfold not. intros. inversion H0. pose proof H H0. clear H H0.
+unfold EQUIV in H1. eapply simplifyL in H1. pose proof global_atms Alternate1 (AirspeedSlow3 Left) (AirspeedSlow3 Middle) (AirspeedSlow3 Right). 
+unfold EQUIV in H. eapply simplifyR in H. Htrans. assumption.
+unfold Config_3 in H. unfold Input3 in H. unfold pre_s in H. simpl in H.
+ eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
+Qed.
+
