@@ -344,3 +344,7 @@ unfold EQUIV in H1. eapply simplifyL in H1. pose proof global_atms Alternate2 (A
 unfold Config_1 in H. unfold Input1 in H. unfold pre_s in H. simpl in H.
  eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
 Qed.
+
+Definition Config_2 := (atm (InstrumentL (HorLeft2 Left))) 
+                       & (atm (InstrumentM (HorLevel Middle)))
+                       & (atm (InstrumentR (HorLevel Right))).
