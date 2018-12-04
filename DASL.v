@@ -345,6 +345,11 @@ unfold Config_1 in H. unfold Input1 in H. unfold pre_s in H. simpl in H.
  eapply hyposyll. eassumption. eapply curry. match goal with [|-|--((?p&?q)==>?r)]=>assert(|--((p&q)==>(q&p))) end. eapply conjcomm_IMP. eapply hyposyll. eassumption. eapply uncurry. eapply neg_intro_failure.
 Qed.
 
-Definition Config_2 := (atm (InstrumentL (HorLeft2 Left))) 
+Definition Config_2 := (atm (M Normal))
+                       & (atm (InstrumentL (HorLeft2 Left))) 
                        & (atm (InstrumentM (HorLevel Middle)))
                        & (atm (InstrumentR (HorLevel Right))).
+
+Definition Input2 := act Pilot Pilot Pri HardWingRight
+                      (Global Normal (HorLeft2 Left) (HorLevel Middle) (HorLevel Right))
+                      (Global Normal (HorLeft2 Left) (HorLeft2 Middle) (HorLeft2 Right)).
