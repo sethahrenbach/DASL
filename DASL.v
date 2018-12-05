@@ -171,6 +171,33 @@ Axiom distribution : forall p1 p2 p3 p4,
     |-- ((p1==>p2)&(p3==>p4)) <->
     |-- ((p1&p3)==>(p2&p4)).
 
+Theorem antecedent_conj_comm : forall p1 p2 p3,
+    |-- ((p1 & p2) ==> p3) ->
+    |-- ((p2 & p1) ==> p3).
+Proof.
+intros. Abort.
+
+
+Theorem B_K_imp : forall (a : Agents) (p : prop) (q : prop),
+       |-- B a (p ==> q) ->
+       |-- (B a p ==> B a q).
+Proof.
+intros. 
+pose proof B_K a p q. 
+pose proof imp_drop (B a p) (B a (p ==> q)) (B a q). 
+apply H1 in H0.
+assumption. assumption.
+Qed.
+
+Theorem B_4 : forall (a : Agents) (p : prop), theorem (B a p ==> B a (B a p)).
+Proof.
+intros.
+pose proof B_BK a p.
+pose proof B_K_imp a (K a p) (B a p).
+pose proof K_B a p.
+pose proof B_Nec a (K a p ==> B a p) H1; clear H1. apply H0 in H2; clear H0.
+eapply hyposyll. eassumption. assumption.
+Qed.
 
 Axiom global_atms : forall (m: Mode) (rl : Readings Left) (rm : Readings Middle) (rr : Readings Right),
              |-- (atm (InstrumentsG (Global m rl rm rr)) <=> atm (M m) & atm (InstrumentL rl) & atm (InstrumentM rm) & atm (InstrumentR rr)).
