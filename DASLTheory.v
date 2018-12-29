@@ -78,6 +78,11 @@ Definition euclidean_Rb_frame (F : frame) : Prop :=
     (Rb F ags w y) ->
     (Rb F ags x y).
 
+Definition Rb_subset_Rk (F : frame) : Prop :=
+  forall (w x : (W F)) (a : DASL.Agents),
+  (Rb F a w x) ->
+  (Rk F a w x).
+
 Lemma K_is_refl : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (reflexive_Rk_frame F) ->
   F ||= ((K a phi) ==> phi).
@@ -123,4 +128,18 @@ Proof.
                 pose proof H w; clear H; pose proof H2 y; clear H2; pose proof H x; clear H;
                 pose proof H2 a H1; clear H2; pose proof H H3; clear H; pose proof H4 H2; assumption.
 Qed.
+
+Lemma KB_is_Rb_subset_Rk : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  (Rb_subset_Rk F) ->
+  F ||= (K a phi ==> B a phi).
+Proof.
+  intros; unfold Rb_subset_Rk in H;
+    unfold Frame_validity;
+      intros; unfold Model_satisfies;
+        intros; unfold satisfies; intro H0; intro x;
+          pose proof H0 x; clear H0; intro;
+          pose proof H w x a H0; clear H;
+          pose proof H1 H2; clear H1; assumption.
+Qed.
+   
 
