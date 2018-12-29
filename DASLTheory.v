@@ -1,6 +1,24 @@
 Add LoadPath "/Users/sethahrenbach/DASL".
 Require Import DASL.
 
+Definition negb (b:bool) : bool := 
+  match b with
+  | true => false
+  | false => true
+  end.
+
+Definition andb (b1:bool) (b2:bool) : bool := 
+  match b1 with 
+  | true => b2 
+  | false => false
+  end.
+
+Definition orb (b1:bool) (b2:bool) : bool := 
+  match b1 with 
+  | true => true
+  | false => b2
+  end.
+
 (* This is heavily inspired by Paulien de Wind's M.Sc. Thesis: "Modal Logic in Coq", University of Amsterdam, 2001.
  *)
 Inductive var : Set := p : nat -> var.
@@ -50,8 +68,9 @@ Definition valid (phi : prop) := forall (F : frame),
 Definition reflexive_Rk_frame (F : frame) : Prop := 
   forall (w : (W F)) (ags : DASL.Agents), (Rk F ags w w).
 
-Definition reflexive_Rb_frame (F : frame) : Prop := 
-  forall (w : (W F)) (ags : DASL.Agents), (Rb F ags w w).
+Definition serial_Rb_frame (F : frame) : Prop := 
+  forall (w : (W F)) (ags : DASL.Agents), 
+    exists (y : (W F)), (Rb F ags w y).
 
 Lemma K_is_refl : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (reflexive_Rk_frame F) ->
@@ -68,6 +87,22 @@ Proof.
         auto.
 Qed.
 
+Lemma B_is_serial : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  (serial_Rb_frame F) ->
+  F ||= ((B a phi) ==> NOT (B a (NOT phi))).
+Proof.
+  intros.
+  unfold serial_Rb_frame in H.
+  unfold Frame_validity. 
+    intros.
+    unfold Model_satisfies. 
+      intros. pose proof H w; clear H. pose proof H0 a; clear H0.
+      unfold satisfies.
+        destruct H.
+        intros. pose proof H0 x; clear H0. simpl in H1. pose proof H1 H; clear H1. simpl. unfold not.
+        intros.
+        pose proof H1 x H; clear H1. pose proof H2 H0. assumption.
+Qed.
 
 
 
