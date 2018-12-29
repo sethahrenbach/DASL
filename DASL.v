@@ -2,59 +2,72 @@ Add LoadPath "/Users/sethahrenbach/DASL".
 Require Import List.
 
 
-Inductive Agents: Set := Pilot | CoPilot | AutoPilot.
+Inductive Agents: Type := Pilot | CoPilot | AutoPilot.
+Check Agents.
 
 (* Definition G := Pilot :: CoPilot :: AutoPilot :: nil.
  *)
-Inductive Inputs : Set := HardThrustPlus | ThrustPlus | HardNoseUp | NoseUp | HardWingLeft | WingLeft| HardThrustMinus | ThrustMinus
+Inductive Inputs : Type := HardThrustPlus | ThrustPlus | HardNoseUp | NoseUp | HardWingLeft | WingLeft| HardThrustMinus | ThrustMinus
                          | HardNoseDown | NoseDown | HardWingRight | WingRight.
+Check Inputs.
 
-Inductive Side : Set := Left | Middle | Right .
+Inductive Side : Type := Left | Middle | Right .
+Check Side.
 
-Inductive Readings (s : Side) : Set := VertUp1 | VertUp2 | VertUp3 | VertUp4 | VertDown1 | VertDown2 | VertDown3 | VertDown4 | VertLevel
+Inductive Readings (s : Side) : Type := VertUp1 | VertUp2 | VertUp3 | VertUp4 | VertDown1 | VertDown2 | VertDown3 | VertDown4 | VertLevel
                           | HorLeft1 | HorLeft2 | HorLeft3 | HorRight1 | HorRight2 | HorRight3 | HorLevel
                           | AirspeedFast1 | AirspeedFast2 | AirspeedFast3 | AirspeedSlow1 | AirspeedSlow2 | AirspeedSlow3 | AirspeedCruise
                           | AltCruise | AltClimb | AltDesc | AltLand.
+Check Readings.
 
-Inductive Mode : Set := Normal | Alternate1 | Alternate2.
+Inductive Mode : Type := Normal | Alternate1 | Alternate2.
+Check Mode.
 
-Inductive GlobalReadings : Set := Global (m: Mode) (rl : Readings Left) (rm : Readings Middle) (rr : Readings Right). 
+Inductive GlobalReadings : Type := Global (m: Mode) (rl : Readings Left) (rm : Readings Middle) (rr : Readings Right).
+Check GlobalReadings. 
 
-Inductive Atoms : Set := 
+Inductive Atoms : Type := 
           | M (m : Mode)
           | Input (a : Inputs) 
           | InstrumentL (r : Readings Left) 
           | InstrumentM (r : Readings Middle) 
           | InstrumentR (r : Readings Right)
           | InstrumentsG (g : GlobalReadings).
+Check Atoms.
 
 
-Inductive prop : Set :=
+Inductive prop : Type :=
    | atm : Atoms -> prop
-   | imp: prop -> prop -> prop
-   | Forall : forall (A : Set), (A -> prop) -> prop
+   | imp : prop -> prop -> prop
+   | negp : prop -> prop
+   | falsum : prop
    | K : Agents -> prop -> prop
-   | B : Agents -> prop -> prop
-   | Ck : list Agents -> prop -> prop
-   | Cb : list Agents -> prop -> prop.
+   | B : Agents -> prop -> prop.
+ (*   | Ck : list Agents -> prop -> prop
+   | Cb : list Agents -> prop -> prop. *)
+Check prop.
 
 
 
 Infix "==>" := imp (right associativity, at level 85).
-Notation "\-/ p" := (Forall _ p) (at level 70, right associativity).
+Notation "! p" := (negp p) (at level 70, right associativity).
+Notation "_|_" := (falsum).
 
-Definition Exist (A : Set) (P : A -> prop) := 
-\-/ (fun p: prop => \-/ (fun a : A => P a ==> p) ==> p).
 
-Definition FALSE := \-/ (fun p : prop => p).
+Check prop.
 
-Definition TRUE := Exist prop (fun p : prop => p).
+(* Definition Exist A (P : A -> prop) :=  *)
+(* \-/ (fun p => \-/ (fun a : A => P a ==> p) ==> p). *)
 
-Definition NOT (p : prop) := p ==> FALSE.
+Definition FALSE := _|_.
 
-Definition AND (p q : prop) := \-/ (fun r : prop => (p ==> q ==> r) ==> r).
+Definition TRUE := ! _|_.
 
-Definition OR (p q : prop) := \-/ (fun r : prop => (p ==> r) ==> (q ==> r) ==> r).
+Definition NOT (p : prop) := ! p.
+
+Definition OR (p q : prop) := imp (NOT p) q.
+
+Definition AND (p q : prop) := ! (OR (! p) q).
 
 Infix "&" := AND (left associativity, at level 50).
 Infix "V" := OR (left associativity, at level 50).
