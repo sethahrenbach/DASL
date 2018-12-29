@@ -72,6 +72,12 @@ Definition serial_Rb_frame (F : frame) : Prop :=
   forall (w : (W F)) (ags : DASL.Agents), 
     exists (y : (W F)), (Rb F ags w y).
 
+Definition euclidean_Rb_frame (F : frame) : Prop :=
+  forall (w x y : (W F)) (ags : DASL.Agents),
+    (Rb F ags w x) ->
+    (Rb F ags w y) ->
+    (Rb F ags x y).
+
 Lemma K_is_refl : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (reflexive_Rk_frame F) ->
   F ||= ((K a phi) ==> phi).
@@ -104,7 +110,14 @@ Proof.
         pose proof H1 x H; clear H1. pose proof H2 H0. assumption.
 Qed.
 
-
-
-
+Lemma B_is_euclidean : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  (euclidean_Rb_frame F) ->
+  F ||= (NOT (B a phi) ==> B a (NOT (B a phi))).
+Proof.
+  intros; unfold euclidean_Rb_frame in H. unfold Frame_validity. intros. unfold Model_satisfies. intros.
+  unfold satisfies. unfold NOT. unfold not. intros. contradiction H0. intro x. intros. pose proof H2 x; clear H2.
+   
+  pose proof H w; clear H. pose proof H2 y; clear H2. pose proof H x; clear H.
+  pose proof H2 a H1; clear H2. pose proof H H3; clear H. pose proof H4 H2; assumption.
+Qed.
 
