@@ -114,10 +114,13 @@ Lemma B_is_euclidean : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (euclidean_Rb_frame F) ->
   F ||= (NOT (B a phi) ==> B a (NOT (B a phi))).
 Proof.
-  intros; unfold euclidean_Rb_frame in H. unfold Frame_validity. intros. unfold Model_satisfies. intros.
-  unfold satisfies. unfold NOT. unfold not. intros. contradiction H0. intro x. intros. pose proof H2 x; clear H2.
-   
-  pose proof H w; clear H. pose proof H2 y; clear H2. pose proof H x; clear H.
-  pose proof H2 a H1; clear H2. pose proof H H3; clear H. pose proof H4 H2; assumption.
+  intros; unfold euclidean_Rb_frame in H; 
+    unfold Frame_validity; 
+      intros; unfold Model_satisfies;
+          intros; unfold satisfies; unfold NOT; unfold not; 
+            intros; contradiction H0;
+              intro x; intros; pose proof H2 x; clear H2;
+                pose proof H w; clear H; pose proof H2 y; clear H2; pose proof H x; clear H;
+                pose proof H2 a H1; clear H2; pose proof H H3; clear H; pose proof H4 H2; assumption.
 Qed.
 
