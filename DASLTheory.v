@@ -83,6 +83,12 @@ Definition Rb_subset_Rk (F : frame) : Prop :=
   (Rb F a w x) ->
   (Rk F a w x).
 
+Definition Rb_subset_Rb_compose_Rk (F : frame) : Prop :=
+  forall (w x y : (W F)) (a :  DASL.Agents),
+  (Rb F a w x) ->
+  (Rk F a x y) ->
+  (Rb F a w y).
+
 Lemma K_is_refl : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (reflexive_Rk_frame F) ->
   F ||= ((K a phi) ==> phi).
@@ -141,5 +147,17 @@ Proof.
           pose proof H w x a H0; clear H;
           pose proof H1 H2; clear H1; assumption.
 Qed.
-   
+
+Lemma B_BK_is_Rb_subset_Rb_compose_Rk : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  (Rb_subset_Rb_compose_Rk F) ->
+  F ||= (B a phi ==> B a (K a phi)).
+Proof.
+  unfold Rb_subset_Rb_compose_Rk; intros;
+  unfold Frame_validity; intros; unfold Model_satisfies; intros; unfold satisfies;
+  intro H0; intro x; intro H1; intro y;
+    pose proof H w x y a H1; clear H; intro H3;
+    pose proof H2 H3; clear H2;
+    pose proof H0 y H; clear H0;
+    assumption.
+Qed.
 
