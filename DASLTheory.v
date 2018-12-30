@@ -161,3 +161,38 @@ Proof.
     assumption.
 Qed.
 
+Lemma Hilbert_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
+  F ||= (p ==> q ==> p).
+Proof.
+  intros p q F a.
+  repeat (try unfold Frame_validity; intros; try unfold Model_satisfies; intros; try unfold satisfies; intros; assumption).
+Qed.
+
+Lemma Hilbert_S_Frame_Valid : forall (p q r : prop) (F : frame) (a : DASL.Agents),
+  F ||= ((p==>q==>r)==>(p==>q)==>(p==>r)).
+Proof.
+  intros p q r F a.
+  
+  repeat (try unfold Frame_validity; 
+              intros; try unfold Model_satisfies; 
+              intros; try unfold satisfies;  
+              intros; try pose proof H H1; clear H; 
+                      try pose proof H0 H1; clear H0; 
+                      try pose proof H2 H; 
+          assumption).
+Qed.
+
+Axiom base_double_negation : forall p,
+  not (not p) = p.
+
+Lemma Classic_NOTNOT_Frame_Valid : forall (p : prop) (F : frame) (a : DASL.Agents),
+  F ||= ((NOT (NOT p)) ==> p).
+Proof.
+  intros p F a.
+   repeat (try unfold Frame_validity; 
+              intros; try unfold Model_satisfies; 
+              intros; try unfold satisfies;  
+              intros; try unfold NOT in H; 
+                      try rewrite base_double_negation in H; 
+                      try assumption).
+Qed.
