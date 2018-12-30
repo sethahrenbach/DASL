@@ -196,3 +196,77 @@ Proof.
                       try rewrite base_double_negation in H; 
                       try assumption).
 Qed.
+
+Lemma MP_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
+  F ||= (p ==> q) ->
+  F ||= p ->
+  F ||= q.
+Proof.
+  intros p q F a.
+  unfold Frame_validity.
+  unfold Model_satisfies.
+  unfold satisfies.
+  intros.
+  pose proof H Val0 Ags; clear H.
+  pose proof H0 Val0 Ags; clear H0.
+  pose proof H w; clear H.
+  pose proof H1 w H0; clear H1. assumption.
+Qed.
+
+Lemma K_Nec_Frame_Valid : forall (p : prop) (F : frame) (a : DASL.Agents),
+  F ||= p ->
+  F ||= K a p.
+Proof.
+  intros p F a.
+  unfold Frame_validity; unfold Model_satisfies; unfold satisfies; intros.
+  pose proof H Val0 Ags y; clear H. assumption.
+Qed.
+
+Lemma K_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
+  F ||= (K a p ==> K a (p ==> q) ==> K a q).
+Proof.
+  intros p q F a.
+  unfold Frame_validity; unfold Model_satisfies; unfold satisfies. intros.
+  pose proof H0 y H1; clear H0.
+  pose proof H y H1; clear H. pose proof H2 H0; assumption.
+Qed.
+
+Lemma B_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
+  F ||= (B a p ==> B a (p ==> q) ==> B a q).
+Proof.
+  intros p q F a.
+  unfold Frame_validity; unfold Model_satisfies; unfold satisfies. intros.
+  pose proof H0 y H1; clear H0.
+  pose proof H y H1; clear H. pose proof H2 H0; assumption.
+Qed.
+
+Definition DASL_Frame (F : frame) : Prop :=
+  reflexive_Rk_frame F /\
+  serial_Rb_frame F /\
+  euclidean_Rb_frame F /\
+  Rb_subset_Rk F /\
+  Rb_subset_Rb_compose_Rk F.
+ 
+
+Theorem DASL_Soundness : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  DASL_Frame F ->
+  |-- phi ->
+  F ||= phi.
+Proof.
+   intros phi F.
+    unfold DASL_Frame.
+    intros. destruct H; destruct H1; destruct H2; destruct H3. 
+    induction H0.
+    apply Hilbert_K_Frame_Valid; assumption.
+    apply Hilbert_S_Frame_Valid; assumption.  
+    apply Classic_NOTNOT_Frame_Valid; assumption.
+    eapply MP_Frame_Valid; eassumption.
+    apply K_Nec_Frame_Valid; assumption.
+    apply K_K_Frame_Valid; assumption.
+    apply K_is_refl; assumption.
+    apply B_K_Frame_Valid; assumption.
+    apply B_is_serial; assumption.
+    apply B_is_euclidean; assumption.
+    apply KB_is_Rb_subset_Rk; assumption.
+    apply B_BK_is_Rb_subset_Rb_compose_Rk; assumption.
+Qed.

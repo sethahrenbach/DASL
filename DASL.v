@@ -99,7 +99,7 @@ Inductive theorem : prop -> Prop :=
    |B_K : forall (a : Agents) (p q : prop), theorem (B a p ==> B a (p ==> q) ==> B a q)
    |B_Serial : forall (a : Agents) (p : prop), theorem (B a p ==> NOT (B a (NOT p)))
 (*    |B_4 : forall (a : Agents) (p : prop), theorem (B a p ==> B a (B a p)) *)
-(*    |B_5 : forall (a : Agents) (p : prop), theorem (NOT (B a p) ==> B a (NOT (B a p))) *)
+   |B_5 : forall (a : Agents) (p : prop), theorem (NOT (B a p) ==> B a (NOT (B a p)))
    |K_B : forall (a : Agents) (p : prop), theorem (K a p ==> B a p)
    |B_BK : forall (a : Agents) (p : prop), theorem (B a p ==> B a (K a p))
   (*  |Fix_Ck : forall (G : list Agents) (p q : prop), theorem (Ck G p ==> p & Ek G (Ck G p))
