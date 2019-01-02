@@ -270,7 +270,7 @@ Proof.
     apply B_BK_is_Rb_subset_Rb_compose_Rk; assumption.
 Qed.
 
-Definition simple_prop (p : prop) : Prop :=
+(* Definition simple_prop (p : prop) : Prop :=
   match p with
   | (imp phi1 phi2) => False
   | _ => True
@@ -284,9 +284,9 @@ Fixpoint boxed (p : prop) : Prop :=
   | (B a p') => boxed p'
   | (imp phi1 phi2) => False
   | _ => True
-  end.
+  end. *)
 
-
+(* 
 Fixpoint positive_formula (phi : prop) : Prop :=
   match phi with
   | _|_ => False
@@ -295,9 +295,9 @@ Fixpoint positive_formula (phi : prop) : Prop :=
   | (negp phi') => not (positive_formula phi')
   | (K a phi') => (positive_formula phi')
   | (B a phi') => (positive_formula phi')
-  end.
+  end. *)
 
-Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
+(* Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
   match phi with  
   | _|_ => True
   | (atm atom) => True
@@ -306,7 +306,7 @@ Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
   | (negp phi') => (sahlqvist_antecedent phi')
   | (K a phi') => (boxed phi')
   | (B a phi') => (boxed phi')
-  end.  
+  end.   *)
 
 (* Definition sahlqvist_equivalent (phi : prop) : Prop :=
   exists (phi2 : prop),
@@ -314,24 +314,77 @@ Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
     F ||= (phi <=> phi2) ->
     sahlqvist_formula phi2 ->
     sahlqvist_formula phi. *)
-Inductive var : Type :=
-  | P | Q | R.
+Inductive Var : Set :=
+  | P : nat -> Var.
 
 Inductive formula : Type :=
+  | FVar : Var -> prop -> formula
   | FProp : prop -> formula
-  | FVar : var -> prop -> formula
-  | Fimp : formula -> formula -> formula
+  | FImp : formula -> formula -> formula
   | FNeg : formula -> formula
-  | FK : formula -> DASL.Agents -> formula
-  | FB : formula -> DASL.Agents -> formula.
+  | FK : DASL.Agents -> formula -> formula
+  | FB : DASL.Agents -> formula -> formula.
 
-Definition sahlqvist_formula_def : forall p : prop,
+Notation "\ p" := (FNeg p) (at level 70, right associativity).
+Infix "=f=>" := FImp (right associativity, at level 85).
+Infix "[. for .]" := FVar (at level 70).
+ 
+Fixpoint formulate (p : prop) (n : nat) : formula :=
   match p with
-  | (imp p1 p2) => (sahlqvist_antecedent p1 /\ positive_formula p2)
+  | _|_ => FVar (P n) _|_
+  | atm A => FVar (P n) (atm A)
+  | imp p1 p2 => FImp (formulate p1 n) (formulate p2 (S n))
+  | negp p' => FNeg (formulate p' n)
+  | K a p' => FK a (formulate p' n)
+  | B a p' => FB a (formulate p' n)
+  end.
+
+Definition basic_formula (phi : formula) : Prop :=
+  match phi with
+  | FVar n p => True
+  | FProp p => True
   | _ => False
   end.
 
-Fixpoint sahlqvist_formula (phi : prop) {struct phi} : Prop :=
+Fixpoint negative_formula (phi : formula) : Prop :=
+  match phi with
+  | FVar v p => False
+  | FProp p => False
+  | FImp phi1 phi2 => (not (negative_formula phi1) /\ negative_formula phi2)
+  | FNeg phi' => not (negative_formula phi')
+  | FK a phi' => negative_formula phi'
+  | FB a phi' => negative_formula phi'
+  end.
+
+Definition positive_formula (phi : formula) : Prop :=
+  not (negative_formula phi).
+
+Fixpoint boxed_formula (phi : formula) : Prop :=
+  match phi with
+  | FVar v p => True
+  | FProp p => True
+  | FImp phi1 phi2 => False
+  | FNeg phi' => boxed_formula phi'
+  | FK a phi' => boxed_formula phi'
+  | FB a phi' => boxed_formula phi'
+  end.
+
+
+Definition sahlqvist_antecedent (phi : formula) : Prop :=
+  boxed_formula phi \/ negative_formula phi.
+
+Fixpoint sahlqvist_formula (phi : formula) : Prop :=
+  match phi with
+  | FProp phi'=> True
+  | FVar v phi' => True
+  | FImp phi1 phi2 => (sahlqvist_antecedent phi1) /\ (positive_formula phi2)
+  | FNeg phi' => sahlqvist_antecedent phi'
+  | FK a phi' => sahlqvist_antecedent phi'
+  | FB a phi' => sahlqvist_antecedent phi'
+  end.
+  
+
+(* Fixpoint sahlqvist_formula (phi : prop) {struct phi} : Prop :=
   match phi with
   | _|_ => True
   | (atm atom) => True
@@ -340,22 +393,15 @@ Fixpoint sahlqvist_formula (phi : prop) {struct phi} : Prop :=
   | (K a p') => sahlqvist_formula p'
   | (B a p') => sahlqvist_formula p'
   end.
-
-Lemma K_T_is_sahlqvist : forall (a : DASL.Agents),
-  sahlqvist_formula_def (K a (atm  ==> phi).
+ *)
+Lemma K_T_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula (FK a (FProp phi) =f=> (FProp phi)).
 Proof.
   intros. 
   unfold sahlqvist_formula. split.
-  unfold sahlqvist_antecedent. induction phi; simpl; eauto. split.
-    unfold boxed in IHphi1. simpl in IHphi1.
-
- eauto.
-  unfold boxed in IHphi. induction phi; auto. contradict IHphi.
-    unfold not. simpl. simpl.
-  
-  fold boxed in IHphi1; fold boxed in IHphi2.
-  contradict IHphi.
-    simpl
+  unfold sahlqvist_antecedent. left. unfold boxed_formula. auto.
+  unfold positive_formula; auto.
+Qed.
 
 Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
