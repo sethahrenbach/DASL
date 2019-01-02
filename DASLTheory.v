@@ -21,7 +21,6 @@ Definition orb (b1:bool) (b2:bool) : bool :=
 
 (* This is heavily inspired by Paulien de Wind's M.Sc. Thesis: "Modal Logic in Coq", University of Amsterdam, 2001.
  *)
-Inductive var : Set := p : nat -> var.
 
 Record frame : Type := {
   W : Set;
@@ -270,3 +269,99 @@ Proof.
     apply KB_is_Rb_subset_Rk; assumption.
     apply B_BK_is_Rb_subset_Rb_compose_Rk; assumption.
 Qed.
+
+Definition simple_prop (p : prop) : Prop :=
+  match p with
+  | (imp phi1 phi2) => False
+  | _ => True
+  end.
+
+Fixpoint boxed (p : prop) : Prop :=
+  simple_prop p \/
+  match p with
+  | (negp p') => simple_prop p'
+  | (K a p') => boxed p'
+  | (B a p') => boxed p'
+  | (imp phi1 phi2) => False
+  | _ => True
+  end.
+
+
+Fixpoint positive_formula (phi : prop) : Prop :=
+  match phi with
+  | _|_ => False
+  | (atm atom) => True
+  | (imp phi1 phi2) => (not (positive_formula phi1) /\ positive_formula phi2)
+  | (negp phi') => not (positive_formula phi')
+  | (K a phi') => (positive_formula phi')
+  | (B a phi') => (positive_formula phi')
+  end.
+
+Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
+  match phi with  
+  | _|_ => True
+  | (atm atom) => True
+  | (imp phi1 phi2) => ((sahlqvist_antecedent phi1) /\ (positive_formula phi1) /\
+                       not (positive_formula phi2) /\ (sahlqvist_antecedent phi2))
+  | (negp phi') => (sahlqvist_antecedent phi')
+  | (K a phi') => (boxed phi')
+  | (B a phi') => (boxed phi')
+  end.  
+
+(* Definition sahlqvist_equivalent (phi : prop) : Prop :=
+  exists (phi2 : prop),
+  forall (F : frame) (a : DASL.Agents),
+    F ||= (phi <=> phi2) ->
+    sahlqvist_formula phi2 ->
+    sahlqvist_formula phi. *)
+Inductive var : Type :=
+  | P | Q | R.
+
+Inductive formula : Type :=
+  | FProp : prop -> formula
+  | FVar : var -> prop -> formula
+  | Fimp : formula -> formula -> formula
+  | FNeg : formula -> formula
+  | FK : formula -> DASL.Agents -> formula
+  | FB : formula -> DASL.Agents -> formula.
+
+Definition sahlqvist_formula_def : forall p : prop,
+  match p with
+  | (imp p1 p2) => (sahlqvist_antecedent p1 /\ positive_formula p2)
+  | _ => False
+  end.
+
+Fixpoint sahlqvist_formula (phi : prop) {struct phi} : Prop :=
+  match phi with
+  | _|_ => True
+  | (atm atom) => True
+  | (negp p') => sahlqvist_formula p'
+  | (imp p1 p2) => (sahlqvist_antecedent p1) /\ (positive_formula p2)
+  | (K a p') => sahlqvist_formula p'
+  | (B a p') => sahlqvist_formula p'
+  end.
+
+Lemma K_T_is_sahlqvist : forall (a : DASL.Agents),
+  sahlqvist_formula_def (K a (atm  ==> phi).
+Proof.
+  intros. 
+  unfold sahlqvist_formula. split.
+  unfold sahlqvist_antecedent. induction phi; simpl; eauto. split.
+    unfold boxed in IHphi1. simpl in IHphi1.
+
+ eauto.
+  unfold boxed in IHphi. induction phi; auto. contradict IHphi.
+    unfold not. simpl. simpl.
+  
+  fold boxed in IHphi1; fold boxed in IHphi2.
+  contradict IHphi.
+    simpl
+
+Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
+  DASL_Frame F ->
+  F ||= phi ->
+  |-- phi.
+Proof.
+  intros phi F a. intros.
+  
+  
