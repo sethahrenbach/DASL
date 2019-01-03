@@ -403,6 +403,14 @@ Proof.
   unfold positive_formula; auto.
 Qed.
 
+Lemma B_Serial_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula (FB a (FProp phi) =f=> \ (FB a (\ FProp phi))).
+Proof.
+  intros; unfold sahlqvist_formula; split.
+  unfold sahlqvist_antecedent. left.
+  all: try (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; intuition).
+Qed. 
+
 Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
   F ||= phi ->
