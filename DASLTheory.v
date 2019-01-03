@@ -429,6 +429,24 @@ intros. unfold not. unfold sahlqvist_formula. intros.
   unfold negative_formula in H. destruct H; contradiction.
 Qed.
 
+Lemma K_B_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula (FK a (FProp phi) =f=> FB a (FProp phi)).
+Proof.
+  intros.
+  repeat (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; try intuition).
+  left.
+  repeat (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; try intuition).
+Qed.
+
+Lemma B_BK_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula (FB a (FProp phi) =f=> FB a (FK a (FProp phi))).
+Proof.
+  intros.
+  repeat (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; try intuition).
+  left.
+  repeat (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; try intuition).
+Qed.  
+
 Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
   F ||= phi ->
