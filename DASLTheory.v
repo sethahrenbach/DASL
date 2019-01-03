@@ -409,7 +409,25 @@ Proof.
   intros; unfold sahlqvist_formula; split.
   unfold sahlqvist_antecedent. left.
   all: try (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; intuition).
-Qed. 
+Qed.
+
+Lemma B_5_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula (\ (FB a (\ FB a (FProp phi))) =f=> (FB a (FProp phi))).
+Proof.
+intros.
+unfold sahlqvist_formula. split.
+  unfold sahlqvist_antecedent. left. unfold boxed_formula. intuition.
+  unfold positive_formula. unfold not. unfold negative_formula. intuition.
+Qed.
+
+Example Lob_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  ~ sahlqvist_formula (FK a (FK a (FProp phi) =f=> (FProp phi)) =f=> FK a (FProp phi)).
+Proof.
+intros. unfold not. unfold sahlqvist_formula. intros.
+  destruct H. unfold sahlqvist_antecedent in H. destruct H.
+  unfold boxed_formula in H; assumption.
+  unfold negative_formula in H. destruct H; contradiction.
+Qed.
 
 Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
