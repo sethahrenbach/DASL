@@ -318,7 +318,6 @@ Inductive Var : Set :=
   | P : nat -> Var.
 
 Inductive formula : Type :=
-  | FVar : Var -> prop -> formula
   | FProp : prop -> formula
   | FImp : formula -> formula -> formula
   | FNeg : formula -> formula
@@ -327,7 +326,6 @@ Inductive formula : Type :=
 
 Notation "\ p" := (FNeg p) (at level 70, right associativity).
 Infix "=f=>" := FImp (right associativity, at level 85).
-Infix "[. for .]" := FVar (at level 70).
 
 Definition FOr (a b : formula) := (FNeg a) =f=> b.
 Infix "a ||| b" := (FOr a b) (at level 75).
@@ -346,14 +344,12 @@ Fixpoint formulate (p : prop) (n : nat) : formula :=
 
 Definition basic_formula (phi : formula) : Prop :=
   match phi with
-  | FVar n p => True
   | FProp p => True
   | _ => False
   end.
 
 Fixpoint negative_formula (phi : formula) : Prop :=
   match phi with
-  | FVar v p => False
   | FProp p => False
   | FImp phi1 phi2 => (not (negative_formula phi1) \/ negative_formula phi2)
   | FNeg phi' => not (negative_formula phi')
@@ -366,7 +362,6 @@ Definition positive_formula (phi : formula) : Prop :=
 
 Fixpoint boxed_formula (phi : formula) : Prop :=
   match phi with
-  | FVar v p => True
   | FProp p => True
   | FImp phi1 phi2 => False
   | FNeg phi' => False
@@ -377,7 +372,6 @@ Fixpoint boxed_formula (phi : formula) : Prop :=
 
 Fixpoint sahlqvist_antecedent (phi : formula) : Prop :=
   match phi with
-  | FVar v p => True
   | FProp p => True
   | FImp phi1 phi2 => (negative_formula (FNeg phi1) \/ boxed_formula phi1) 
                    /\ (negative_formula phi2 \/ boxed_formula phi2)
@@ -389,7 +383,6 @@ Fixpoint sahlqvist_antecedent (phi : formula) : Prop :=
 Fixpoint sahlqvist_formula (phi : formula) : Prop :=
   match phi with
   | FProp phi'=> True
-  | FVar v phi' => True
   | FImp phi1 phi2 => (sahlqvist_antecedent phi1) /\ (positive_formula phi2)
   | FNeg phi' => sahlqvist_antecedent phi'
   | FK a phi' => boxed_formula phi'
@@ -500,11 +493,29 @@ intros.
 unfold sahlqvist_formula; split; repeat (match goal with [|- ?predicate (?p : formula)] => unfold predicate end; try intuition).
 Qed.
 
+Fixpoint form_to_prop (phi : formula) : prop :=
+  match phi with
+  | FProp phi' => phi'
+  | FImp phi1 phi2 => (form_to_prop phi1) ==> (form_to_prop phi2)
+  | FNeg phi' => ! (form_to_prop phi')
+  | FK a phi' => K a (form_to_prop phi')
+  | FB a phi' => B a (form_to_prop phi')
+  end.
+
+
+Axiom sahlqvist_is_canonical : forall (phi : formula),
+  sahlqvist_formula phi ->
+  exists (F : frame), DASL_Frame F /\
+    forall (a : DASL.Agents),
+      F ||= form_to_prop phi ->
+      |-- form_to_prop phi.
+    
+
 Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
   F ||= phi ->
   |-- phi.
 Proof.
-  intros phi F a. intros.
+  intros phi F a. intros. pose proof sahlqvist_is_canonical.
   
   
