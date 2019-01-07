@@ -1,5 +1,5 @@
 Add LoadPath "/Users/sethahrenbach/DASL".
-Require Import DASL.
+Require Import DASL List.
 
 Definition negb (b:bool) : bool := 
   match b with
@@ -160,6 +160,7 @@ Proof.
     pose proof H0 y H; clear H0;
     assumption.
 Qed.
+
 
 Lemma Hilbert_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
   F ||= (p ==> q ==> p).
@@ -440,6 +441,8 @@ Proof.
   unfold positive_formula; auto.
 Qed.
 
+Hint Resolve K_T_is_sahlqvist.
+
 Lemma B_Serial_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   sahlqvist_formula (FB a (FProp phi) =f=> \ (FB a (\ FProp phi))).
 Proof.
@@ -447,6 +450,8 @@ Proof.
   unfold sahlqvist_antecedent. simpl; auto.
   unfold positive_formula; auto.
 Qed.
+
+Hint Resolve B_Serial_is_sahlqvist.
 
 Lemma B_5_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   sahlqvist_formula (\ (FB a (\ FB a (FProp phi))) =f=> (FB a (FProp phi))).
@@ -456,6 +461,8 @@ unfold sahlqvist_formula. split.
   unfold sahlqvist_antecedent. simpl; auto.
   unfold positive_formula; simpl; auto. 
 Qed.
+
+Hint Resolve B_5_is_sahlqvist.
 
 Example Lob_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   ~ sahlqvist_formula (FK a (FK a (FProp phi) =f=> (FProp phi)) =f=> FK a (FProp phi)).
@@ -470,6 +477,8 @@ Proof.
   unfold sahlqvist_formula; split; simpl; auto. unfold positive_formula; simpl; auto.
 Qed.
 
+Hint Resolve K_B_is_sahlqvist.
+
 Lemma B_BK_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   sahlqvist_formula (FB a (FProp phi) =f=> FB a (FK a (FProp phi))).
 Proof.
@@ -477,13 +486,15 @@ Proof.
   unfold sahlqvist_formula; split; try (simpl; auto); try (unfold positive_formula; simpl; auto).
 Qed.
 
+Hint Resolve B_BK_is_sahlqvist.
+
 Lemma Hilbert_K_is_sahlqvist : forall (p q : prop) (a : DASL.Agents),
   sahlqvist_formula (normal_form ((FProp p) =f=> (FProp q) =f=> (FProp p))).
 Proof.
   intros. simpl; auto.
-
 Qed.
 
+Hint Resolve Hilbert_K_is_sahlqvist.
 
 Lemma Hilbert_S_is_sahlqvist : forall (p q r : prop),
   sahlqvist_formula (normal_form (((FProp p) =f=> (FProp q) =f=> (FProp r)) =f=>
@@ -492,6 +503,8 @@ Lemma Hilbert_S_is_sahlqvist : forall (p q r : prop),
 Proof.
 intros. simpl; auto. 
 Qed. 
+
+Hint Resolve Hilbert_S_is_sahlqvist.
 
 Example McKinsey_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   ~ sahlqvist_formula (FK a (FNeg (FK a (FNeg (FProp phi)))) =f=> FNeg (FK a (FNeg (FK a (FProp phi))))).
@@ -505,12 +518,26 @@ Proof.
 intros. simpl; split; auto. unfold positive_formula; simpl; auto.
 Qed.
 
+Hint Resolve Classic_NOTNOT_is_sahlqvist.
+
 Example Church_Rosser_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
   sahlqvist_formula (\ (FK a (\ (FK a (FProp phi)))) =f=> (FK a (\ (FK a (\ (FProp phi)))))).
 Proof.
   intros.
   simpl; split; auto. unfold positive_formula; simpl; auto.
 Qed.
+
+Example Brouwer_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  sahlqvist_formula ((FProp phi) =f=> \ (FK a (\ (FK a (FProp phi))))).
+Proof.
+  intros; simpl; split; auto; unfold positive_formula; intuition.
+Qed.
+
+Example Brouwer_is_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
+  ~ ( sahlqvist_formula ((FProp phi) =f=> \ (FK a (\ (FK a (FProp phi))))) ).
+Proof.
+intros. simpl. unfold not. intros. destruct H. unfold positive_formula in H0. simpl in H0.
+intuition. Abort.
 
 Fixpoint form_to_prop (phi : formula) : prop :=
   match phi with
@@ -533,6 +560,7 @@ Fixpoint prop_to_form (phi : prop) : formula :=
   | (B a phi') => FB a (prop_to_form phi')
   end.
 
+
 Inductive Ftheorem : formula -> Prop :=
    |FHilbert_K: forall p q : prop, Ftheorem ((FProp p) =f=> (FProp q) =f=> (FProp p))
    |FHilbert_S: forall p q r : prop, Ftheorem (((FProp p)=f=>(FProp q)=f=>(FProp r))=f=>((FProp p)=f=>(FProp q))=f=>((FProp p)=f=>(FProp r)))
@@ -547,46 +575,95 @@ Inductive Ftheorem : formula -> Prop :=
    |FK_B : forall (a : DASL.Agents) (p : prop), Ftheorem (FK a (FProp p) =f=> FB a (FProp p))
    |FB_BK : forall (a : DASL.Agents) (p : prop), Ftheorem (FB a (FProp p) =f=> FB a (FK a (FProp p))).
 
+Notation "|f-" := Ftheorem (at level 80).
 Check Build_frame.
+Check frame.
 
+Inductive Logic : Type := 
+| L (l : list formula).
 
-Axiom sahlqvist_is_canonical : forall (phi : formula),
-  sahlqvist_formula phi ->
-  exists (F : frame), DASL_Frame F /\
-    forall (a : DASL.Agents),
-      F ||= form_to_prop phi ->
-      |-- form_to_prop phi.
-    
-Axiom sahlqvist_is_canonical2 : forall (phi : prop), exists (F : frame),
+Definition DASL_Axioms (p q r : prop) (a : DASL.Agents) :=
+((FProp p) =f=> (FProp q) =f=> (FProp p)) 
+:: (((FProp p)=f=>(FProp q)=f=>(FProp r))=f=>((FProp p)=f=>(FProp q))=f=>((FProp p)=f=>(FProp r))) 
+:: ((\ (\ (FProp p))) =f=> (FProp p)) 
+:: (FK a (FProp p) =f=> FK a ((FProp p) =f=> (FProp q)) =f=> FK a (FProp q))
+:: (FK a (FProp p) =f=> (FProp p))
+:: (FB a (FProp p) =f=> FB a ((FProp p) =f=> (FProp q)) =f=> FB a (FProp q))
+:: (FB a (FProp p) =f=> \ (FB a (\ (FProp p))))
+:: (\ (FB a (FProp p)) =f=> FB a (\ (FB a (FProp p))))
+:: (FK a (FProp p) =f=> FB a (FProp p))
+:: (FB a (FProp p) =f=> FB a (FK a (FProp p)))
+:: nil.
+
+Definition DASL (p q r : prop) (a : DASL.Agents) := 
+L (DASL_Axioms p q r a).
+
+Definition ppp : prop := atm (M Normal).
+Definition qqq : prop := atm (M Normal).
+Definition rrr : prop := atm (M Normal).
+Definition aaa : DASL.Agents := Pilot.
+Check (DASL_Axioms ppp qqq rrr aaa).
+Check DASL.
+
+Check Logic.
+Check nil.
+
+Fixpoint Complete_via_Sahlqvist (l : list formula) : Prop :=  
+  match l with
+  | nil => True
+  | (l' :: els) => sahlqvist_formula (normal_form l') /\ Complete_via_Sahlqvist (els)
+  end.
+
+Check K.
+Print ex.
+Check ex.
+
+Axiom sahlqvist_is_canonical : forall (phi : prop),
   sahlqvist_formula (prop_to_form phi) ->
-  F ||= phi ->
-  |-- phi.
-  
-Fixpoint translate_to_first_order (phi : formula) (Mo : model) : Prop :=
-forall (w : (W (F Mo))) (ags : DASL.Agents), (Rk (F Mo) ags w w).
+  (forall F: frame,
+    F ||= phi ->
+    |-- phi).
 
+Theorem DASL_Axioms_Complete : forall (p q r : prop) (a : DASL.Agents),
+  Complete_via_Sahlqvist (DASL_Axioms p q r a).
+Proof.
+intros. unfold DASL_Axioms. constructor; auto.
+constructor; auto.
+constructor; auto. unfold sahlqvist_formula; split. simpl; auto. simpl; auto.
+constructor; auto. unfold normal_form. unfold sahlqvist_formula. split; simpl; intuition.
+constructor; auto. unfold normal_form; simpl; intuition.
+constructor; auto. unfold normal_form; simpl; intuition.
+constructor; auto; unfold normal_form; simpl; intuition.
+Qed.
 
-Theorem DASL_Completeness : forall (phi : prop) (F : frame) (a : DASL.Agents),
+Lemma schema_to_prop_completeness : forall (phi : formula),
+  |f- phi ->
+  |-- form_to_prop phi.
+Proof.
+intros.
+induction H; simpl; try constructor.
+simpl in IHFtheorem1.
+simpl in IHFtheorem2. pose proof MP p q IHFtheorem1; auto.
+simpl in IHFtheorem; auto.
+Qed.
+(* 
+Lemma frame_valid_to_schema_complete : forall (phi : prop),
+  (exists (F : frame),
+   F ||= phi) ->
+  |f- (prop_to_form phi).
+Proof.
+intros. destruct H as [F].
+induction H. simpl. induction phi. unfold prop_to_form. unfold Frame_validity in H.
+ *)
+Theorem DASL_Completeness : forall (phi : prop) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
   DASL_Frame F ->  
   F ||= phi ->
   |-- phi.
-Proof.
-  intro phi.
-  pose proof sahlqvist_is_canonical2 phi.  induction phi. case H. 
-  
-  destruct H. intro. apply H. auto. 
+Proof. intros.
+
+pose proof sahlqvist_is_canonical. 
+induction H1 with phi F0; try constructor.
+pose proof MP p q; auto. auto. 
+induction phi; simpl. auto. split.
  
-    
-  pose proof sahlqvist_is_canonical2 phi. destruct H as [F]. intros F a. intros. 
-  
-  
-
- (Build_frame W0 Rk0 Rb0 a)s
-  induction H1 as [F].
-  intro F0. intro.
-  apply H2. destruct H2. 
-  unfold prop_to_form; unfold sahlqvist_formula; intuition.
-  
-  
-
- intuition.
+Qed.

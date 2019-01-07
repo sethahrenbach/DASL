@@ -6,7 +6,7 @@ Inductive Agents: Type := Pilot | CoPilot | AutoPilot.
 Check Agents.
 
 (* Definition G := Pilot :: CoPilot :: AutoPilot :: nil.
- *)
+*)
 Inductive Inputs : Type := HardThrustPlus | ThrustPlus | HardNoseUp | NoseUp | HardWingLeft | WingLeft| HardThrustMinus | ThrustMinus
                          | HardNoseDown | NoseDown | HardWingRight | WingRight.
 Check Inputs.
