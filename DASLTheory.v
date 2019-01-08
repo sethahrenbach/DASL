@@ -30,6 +30,8 @@ Record frame : Type := {
 
 Check frame.
 
+
+
 Check Build_frame.
 
 Record model : Type := {
@@ -103,6 +105,7 @@ Proof.
         intros. pose proof H0 w; clear H0. simpl in H1. pose proof H1 H; clear H1.
         auto.
 Qed.
+
 
 Lemma B_is_serial : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (serial_Rb_frame F) ->
@@ -249,6 +252,7 @@ Definition DASL_Frame (F : frame) : Prop :=
   Rb_subset_Rb_compose_Rk F.
  
 
+
 Theorem DASL_Soundness : forall (phi : prop) (F : frame) (a : DASL.Agents),
   DASL_Frame F ->
   |-- phi ->
@@ -271,53 +275,6 @@ Proof.
     apply KB_is_Rb_subset_Rk; assumption.
     apply B_BK_is_Rb_subset_Rb_compose_Rk; assumption.
 Qed.
-
-(* Definition simple_prop (p : prop) : Prop :=
-  match p with
-  | (imp phi1 phi2) => False
-  | _ => True
-  end.
-
-Fixpoint boxed (p : prop) : Prop :=
-  simple_prop p \/
-  match p with
-  | (negp p') => simple_prop p'
-  | (K a p') => boxed p'
-  | (B a p') => boxed p'
-  | (imp phi1 phi2) => False
-  | _ => True
-  end. *)
-
-(* 
-Fixpoint positive_formula (phi : prop) : Prop :=
-  match phi with
-  | _|_ => False
-  | (atm atom) => True
-  | (imp phi1 phi2) => (not (positive_formula phi1) /\ positive_formula phi2)
-  | (negp phi') => not (positive_formula phi')
-  | (K a phi') => (positive_formula phi')
-  | (B a phi') => (positive_formula phi')
-  end. *)
-
-(* Fixpoint sahlqvist_antecedent (phi : prop) : Prop :=
-  match phi with  
-  | _|_ => True
-  | (atm atom) => True
-  | (imp phi1 phi2) => ((sahlqvist_antecedent phi1) /\ (positive_formula phi1) /\
-                       not (positive_formula phi2) /\ (sahlqvist_antecedent phi2))
-  | (negp phi') => (sahlqvist_antecedent phi')
-  | (K a phi') => (boxed phi')
-  | (B a phi') => (boxed phi')
-  end.   *)
-
-(* Definition sahlqvist_equivalent (phi : prop) : Prop :=
-  exists (phi2 : prop),
-  forall (F : frame) (a : DASL.Agents),
-    F ||= (phi <=> phi2) ->
-    sahlqvist_formula phi2 ->
-    sahlqvist_formula phi. *)
-Inductive Var : Set :=
-  | P : nat -> Var.
 
 Inductive formula : Type :=
   | FProp : prop -> formula
@@ -579,8 +536,6 @@ Notation "|f-" := Ftheorem (at level 80).
 Check Build_frame.
 Check frame.
 
-Inductive Logic : Type := 
-| L (l : list formula).
 
 Definition DASL_Axioms (p q r : prop) (a : DASL.Agents) :=
 ((FProp p) =f=> (FProp q) =f=> (FProp p)) 
@@ -595,18 +550,6 @@ Definition DASL_Axioms (p q r : prop) (a : DASL.Agents) :=
 :: (FB a (FProp p) =f=> FB a (FK a (FProp p)))
 :: nil.
 
-Definition DASL (p q r : prop) (a : DASL.Agents) := 
-L (DASL_Axioms p q r a).
-
-Definition ppp : prop := atm (M Normal).
-Definition qqq : prop := atm (M Normal).
-Definition rrr : prop := atm (M Normal).
-Definition aaa : DASL.Agents := Pilot.
-Check (DASL_Axioms ppp qqq rrr aaa).
-Check DASL.
-
-Check Logic.
-Check nil.
 
 Fixpoint Complete_via_Sahlqvist (l : list formula) : Prop :=  
   match l with
@@ -614,9 +557,6 @@ Fixpoint Complete_via_Sahlqvist (l : list formula) : Prop :=
   | (l' :: els) => sahlqvist_formula (normal_form l') /\ Complete_via_Sahlqvist (els)
   end.
 
-Check K.
-Print ex.
-Check ex.
 
 Axiom sahlqvist_is_canonical : forall (phi : prop),
   sahlqvist_formula (prop_to_form phi) ->
@@ -646,24 +586,9 @@ simpl in IHFtheorem1.
 simpl in IHFtheorem2. pose proof MP p q IHFtheorem1; auto.
 simpl in IHFtheorem; auto.
 Qed.
-(* 
-Lemma frame_valid_to_schema_complete : forall (phi : prop),
-  (exists (F : frame),
-   F ||= phi) ->
-  |f- (prop_to_form phi).
-Proof.
-intros. destruct H as [F].
-induction H. simpl. induction phi. unfold prop_to_form. unfold Frame_validity in H.
- *)
-Theorem DASL_Completeness : forall (phi : prop) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
-  DASL_Frame F ->  
-  F ||= phi ->
-  |-- phi.
-Proof. intros.
 
-pose proof sahlqvist_is_canonical. 
-induction H1 with phi F0; try constructor.
-pose proof MP p q; auto. auto. 
-induction phi; simpl. auto. split.
- 
-Qed.
+Theorem DASL_Completeness : forall (phi : formula) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
+  DASL_Frame F ->  
+  F ||= (form_to_prop) phi ->
+  |f- phi.
+Proof. Abort.
