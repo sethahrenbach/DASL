@@ -495,6 +495,13 @@ Proof.
 intros. simpl. unfold not. intros. destruct H. simpl in H0.
 intuition. apply H0. intros. Abort.
 
+Example Very_simple_Blackburn: forall (p : prop) (a : DASL.Agents),
+  sahlqvist_formula (((FProp p) &&& (\ (FK a (\ (\ (FK a (\ (FProp p)))))))) =f=>
+    (\ (FK a (\ (FProp p))))).
+Proof.
+intros. simpl; intuition.
+Qed.
+
 Fixpoint form_to_prop (phi : formula) : prop :=
   match phi with
   | FProp phi' => phi'
