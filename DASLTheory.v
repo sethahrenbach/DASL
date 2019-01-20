@@ -51,15 +51,18 @@ Fixpoint satisfies (M : model) (x : (W (F M))) (phi : prop) {struct phi} : Prop 
   | (B a phi') => (forall y : (W (F M)), (Rb (F M) a x y) -> (satisfies M y phi'))
   end.
 
+
 Notation "M x |== phi" := (satisfies M x phi) (at level 80).
 
 Definition Model_satisfies (M : model) (phi : prop) := forall (w : (W (F M))),
   satisfies M w phi .
 
+
 Notation "M |= phi" := (Model_satisfies M phi) (at level 80).
 
 Definition Frame_validity (F : frame) (phi : prop) := forall (Val : (W F) -> Atoms -> Prop) (Ags : DASL.Agents),
   (Model_satisfies (Build_model F Val Ags) phi).
+
 
 Notation "F ||= phi" := (Frame_validity F phi) (at level 80).
 
@@ -106,6 +109,7 @@ Proof.
         auto.
 Qed.
 
+Hint Resolve K_is_refl.
 
 Lemma B_is_serial : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (serial_Rb_frame F) ->
@@ -124,6 +128,8 @@ Proof.
         pose proof H1 x H; clear H1. pose proof H2 H0. assumption.
 Qed.
 
+Hint Resolve B_is_serial.
+
 Lemma B_is_euclidean : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (euclidean_Rb_frame F) ->
   F ||= (NOT (B a phi) ==> B a (NOT (B a phi))).
@@ -138,6 +144,8 @@ Proof.
                 pose proof H2 a H1; clear H2; pose proof H H3; clear H; pose proof H4 H2; assumption.
 Qed.
 
+Hint Resolve B_is_euclidean.
+
 Lemma KB_is_Rb_subset_Rk : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (Rb_subset_Rk F) ->
   F ||= (K a phi ==> B a phi).
@@ -150,6 +158,8 @@ Proof.
           pose proof H w x a H0; clear H;
           pose proof H1 H2; clear H1; assumption.
 Qed.
+
+Hint Resolve KB_is_Rb_subset_Rk.
 
 Lemma B_BK_is_Rb_subset_Rb_compose_Rk : forall (phi : prop) (F : frame) (a : DASL.Agents),
   (Rb_subset_Rb_compose_Rk F) ->
@@ -164,6 +174,7 @@ Proof.
     assumption.
 Qed.
 
+Hint Resolve B_BK_is_Rb_subset_Rb_compose_Rk.
 
 Lemma Hilbert_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
   F ||= (p ==> q ==> p).
@@ -171,6 +182,8 @@ Proof.
   intros p q F a.
   repeat (try unfold Frame_validity; intros; try unfold Model_satisfies; intros; try unfold satisfies; intros; assumption).
 Qed.
+
+Hint Resolve Hilbert_K_Frame_Valid.
 
 Lemma Hilbert_S_Frame_Valid : forall (p q r : prop) (F : frame) (a : DASL.Agents),
   F ||= ((p==>q==>r)==>(p==>q)==>(p==>r)).
@@ -186,8 +199,12 @@ Proof.
           assumption).
 Qed.
 
+Hint Resolve Hilbert_S_Frame_Valid.
+
 Axiom base_double_negation : forall p,
   not (not p) = p.
+
+Hint Resolve base_double_negation.
 
 Lemma Classic_NOTNOT_Frame_Valid : forall (p : prop) (F : frame) (a : DASL.Agents),
   F ||= ((NOT (NOT p)) ==> p).
@@ -200,6 +217,8 @@ Proof.
                       try rewrite base_double_negation in H; 
                       try assumption).
 Qed.
+
+Hint Resolve Classic_NOTNOT_Frame_Valid.
 
 Lemma MP_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
   F ||= (p ==> q) ->
@@ -217,6 +236,8 @@ Proof.
   pose proof H1 w H0; clear H1. assumption.
 Qed.
 
+Hint Resolve MP_Frame_Valid.
+
 Lemma K_Nec_Frame_Valid : forall (p : prop) (F : frame) (a : DASL.Agents),
   F ||= p ->
   F ||= K a p.
@@ -225,6 +246,8 @@ Proof.
   unfold Frame_validity; unfold Model_satisfies; unfold satisfies; intros.
   pose proof H Val0 Ags y; clear H. assumption.
 Qed.
+
+Hint Resolve K_Nec_Frame_Valid.
 
 Lemma K_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
   F ||= (K a p ==> K a (p ==> q) ==> K a q).
@@ -235,6 +258,8 @@ Proof.
   pose proof H y H1; clear H. pose proof H2 H0; assumption.
 Qed.
 
+Hint Resolve K_K_Frame_Valid.
+
 Lemma B_K_Frame_Valid : forall (p q : prop) (F : frame) (a : DASL.Agents),
   F ||= (B a p ==> B a (p ==> q) ==> B a q).
 Proof.
@@ -244,13 +269,14 @@ Proof.
   pose proof H y H1; clear H. pose proof H2 H0; assumption.
 Qed.
 
+Hint Resolve B_K_Frame_Valid.
+
 Definition DASL_Frame (F : frame) : Prop :=
   reflexive_Rk_frame F /\
   serial_Rb_frame F /\
   euclidean_Rb_frame F /\
   Rb_subset_Rk F /\
   Rb_subset_Rb_compose_Rk F.
- 
 
 
 Theorem DASL_Soundness : forall (phi : prop) (F : frame) (a : DASL.Agents),
@@ -261,19 +287,7 @@ Proof.
    intros phi F.
     unfold DASL_Frame.
     intros. destruct H; destruct H1; destruct H2; destruct H3. 
-    induction H0.
-    apply Hilbert_K_Frame_Valid; assumption.
-    apply Hilbert_S_Frame_Valid; assumption.  
-    apply Classic_NOTNOT_Frame_Valid; assumption.
-    eapply MP_Frame_Valid; eassumption.
-    apply K_Nec_Frame_Valid; assumption.
-    apply K_K_Frame_Valid; assumption.
-    apply K_is_refl; assumption.
-    apply B_K_Frame_Valid; assumption.
-    apply B_is_serial; assumption.
-    apply B_is_euclidean; assumption.
-    apply KB_is_Rb_subset_Rk; assumption.
-    apply B_BK_is_Rb_subset_Rb_compose_Rk; assumption.
+    induction H0; eauto.  
 Qed.
 
 Inductive formula : Type :=
