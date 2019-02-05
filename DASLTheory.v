@@ -619,14 +619,13 @@ Axiom sahlqvist_is_canonical : forall (phi : prop),
     F ||= phi ->
     |-- phi).
 
+Ltac sahlqvist_complete_list :=
+  match goal with [ |- ?P1 (?P2 _ _ _ _) ] => unfold P2; repeat (constructor; auto; sahlqvist_reduce) end.
+
 Theorem DASL_Axioms_Complete : forall (p q r : prop) (a : DASL.Agents),
   Complete_via_Sahlqvist (DASL_Axioms p q r a).
 Proof.
-intros. unfold DASL_Axioms. constructor; auto. 
-constructor; auto. unfold sahlqvist_formula; split. simpl; auto.
-unfold positive_formula; simpl; intuition. 
-repeat (try constructor; auto).
-unfold positive_formula; simpl; intuition. 
+intros; sahlqvist_complete_list.
 Qed.
 
 Lemma schema_to_prop_completeness : forall (phi : formula),
