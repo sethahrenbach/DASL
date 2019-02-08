@@ -202,7 +202,7 @@ Qed.
 Hint Resolve Hilbert_S_Frame_Valid.
 
 Axiom base_double_negation : forall p,
-  not (not p) = p.
+  not (not p) <-> p.
 
 Hint Resolve base_double_negation.
 
@@ -290,141 +290,161 @@ Proof.
     induction H0; eauto.  
 Qed. 
 
-Inductive formula : Type :=
-  | FProp : prop -> formula
-  | FAnd : formula -> formula -> formula
-  | FOr : formula -> formula -> formula
-  | FImp : formula -> formula -> formula
-  | FNeg : formula -> formula
-  | FK : DASL.Agents -> formula -> formula
-  | FB : DASL.Agents -> formula -> formula.
+Inductive schema : Type :=
+  | SProp : prop -> schema
+  | SAnd : schema -> schema -> schema
+  | SOr : schema -> schema -> schema
+  | SImp : schema -> schema -> schema
+  | SNeg : schema -> schema
+  | SK : DASL.Agents -> schema -> schema
+  | SB : DASL.Agents -> schema -> schema.
 
-Notation "\ p" := (FNeg p) (at level 70, right associativity).
-Infix "=f=>" := FImp (right associativity, at level 85).
+Notation "\ p" := (SNeg p) (at level 70, right associativity).
+Infix "=s=>" := SImp (right associativity, at level 85).
 
-Infix "|||" := FOr (right associativity, at level 75).
+Infix "|s|" := SOr (right associativity, at level 75).
 
-Infix "&&&" := FAnd (right associativity, at level 75).
+Infix "&s&" := SAnd (right associativity, at level 75).
 
-Fixpoint normal_form (phi : formula) : formula :=
+Fixpoint normal_form (phi : schema) : schema :=
   match phi with
-  | FProp phi'=> FProp phi'
-  | FAnd phi1 phi2 => FAnd (normal_form phi1) (normal_form phi2)
-  | FOr phi1 phi2 => FOr (normal_form phi1) (normal_form phi2)
-  | FImp phi1 phi2 => FOr (FNeg (normal_form phi1)) (normal_form phi2)
-  | FNeg phi' => FNeg (normal_form phi')
-  | FK a phi' => FK a (normal_form phi')
-  | FB a phi' => FB a (normal_form phi')
+  | SProp phi'=> SProp phi'
+  | SAnd phi1 phi2 => SAnd (normal_form phi1) (normal_form phi2)
+  | SOr phi1 phi2 => SOr (normal_form phi1) (normal_form phi2)
+  | SImp phi1 phi2 => SOr (SNeg (normal_form phi1)) (normal_form phi2)
+  | SNeg phi' => SNeg (normal_form phi')
+  | SK a phi' => SK a (normal_form phi')
+  | SB a phi' => SB a (normal_form phi')
   end.
 
-Definition basic_formula (phi : formula) : Prop :=
+Definition basic_schema (phi : schema) : Prop :=
   match phi with
-  | FProp p => True
+  | SProp p => True
   | _ => False
   end.
 
-Fixpoint negative_formula (phi : formula) : Prop :=
+Fixpoint negative_formula (phi : schema) : Prop :=
   match phi with
-  | FProp p => False
-  | FAnd phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
-  | FOr phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
-  | FImp phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
-  | FNeg phi' => not (negative_formula phi')
-  | FK a phi' => negative_formula phi'
-  | FB a phi' => negative_formula phi'
+  | SProp p => False
+  | SAnd phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
+  | SOr phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
+  | SImp phi1 phi2 => (negative_formula phi1) /\ (negative_formula phi2)
+  | SNeg phi' => not (negative_formula phi')
+  | SK a phi' => negative_formula phi'
+  | SB a phi' => negative_formula phi'
   end.
 
-Fixpoint positive_formula (phi : formula) : Prop :=
+Fixpoint positive_formula (phi : schema) : Prop :=
   match phi with
-  | FProp p => True
-  | FAnd phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
-  | FOr phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
-  | FImp phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
-  | FNeg phi' => not (positive_formula phi')
-  | FK a phi' => positive_formula phi'
-  | FB a phi' => positive_formula phi'
+  | SProp p => True
+  | SAnd phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
+  | SOr phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
+  | SImp phi1 phi2 => (positive_formula phi1) /\ (positive_formula phi2)
+  | SNeg phi' => not (positive_formula phi')
+  | SK a phi' => positive_formula phi'
+  | SB a phi' => positive_formula phi'
   end.
 
-Fixpoint boxed_formula (phi : formula) : Prop :=
+Fixpoint boxed_formula (phi : schema) : Prop :=
   match phi with
-  | FProp p => True
-  | FAnd phi1 phi2 => False
-  | FOr phi1 phi2 => False
-  | FImp phi1 phi2 => False
-  | FNeg phi' => False
-  | FK a phi' => boxed_formula phi'
-  | FB a phi' => boxed_formula phi'
+  | SProp p => True
+  | SAnd phi1 phi2 => False
+  | SOr phi1 phi2 => False
+  | SImp phi1 phi2 => False
+  | SNeg phi' => False
+  | SK a phi' => boxed_formula phi'
+  | SB a phi' => boxed_formula phi'
   end.
 
-Fixpoint s_a_component (phi : formula) : Prop :=
+Fixpoint s_a_component (phi : schema) : Prop :=
   match phi with
-  | FProp p => True
-  | FAnd phi1 phi2 => (s_a_component phi1) /\ (s_a_component phi2)
-  | FOr phi1 phi2 => (s_a_component phi1) /\ (s_a_component phi2)
-  | FImp phi1 phi2 => not (s_a_component phi1) /\ (s_a_component phi2)
-  | FNeg phi' => match phi' with
-                 | FProp p => True
-                 | FAnd p1 p2 => positive_formula p1 /\ positive_formula p2
-                 | FOr p1 p2 => positive_formula p1 /\ positive_formula p2
-                 | FImp p1 p2 => negative_formula p1 /\ positive_formula p2
-                 | FNeg p' => s_a_component p'
-                 | FK a p' => not (s_a_component p')
-                 | FB a p' => not (s_a_component p')
+  | SProp p => True
+  | SAnd phi1 phi2 => (s_a_component phi1) /\ (s_a_component phi2)
+  | SOr phi1 phi2 => (s_a_component phi1) /\ (s_a_component phi2)
+  | SImp phi1 phi2 => not (s_a_component phi1) /\ (s_a_component phi2)
+  | SNeg phi' => match phi' with
+                 | SProp p => True
+                 | SAnd p1 p2 => positive_formula p1 /\ positive_formula p2
+                 | SOr p1 p2 => positive_formula p1 /\ positive_formula p2
+                 | SImp p1 p2 => negative_formula p1 /\ positive_formula p2
+                 | SNeg p' => s_a_component p'
+                 | SK a p' => not (s_a_component p')
+                 | SB a p' => not (s_a_component p')
                  end
-  | FK a phi' => boxed_formula phi'
-  | FB a phi' => boxed_formula phi'
+  | SK a phi' => boxed_formula phi'
+  | SB a phi' => boxed_formula phi'
   end.
 
-Fixpoint sahlqvist_antecedent (phi : formula) : Prop :=
+Fixpoint sahlqvist_antecedent (phi : schema) : Prop :=
   s_a_component (normal_form phi).
 
-Definition sahlqvist_implication (phi psi : formula) : Prop :=
+Definition sahlqvist_implication (phi psi : schema) : Prop :=
   sahlqvist_antecedent (phi) /\ positive_formula (psi).
 
-Fixpoint prop_in_formula (phi : prop) (psi : formula) : Prop :=
+Fixpoint prop_in_schema (phi : prop) (psi : schema) : Prop :=
   match psi with
-    | FProp psi' => phi = psi'
-    | FAnd psi1 psi2 => (prop_in_formula phi psi1) \/ (prop_in_formula phi psi2)
-    | FOr psi1 psi2 => (prop_in_formula phi psi1) \/ (prop_in_formula phi psi2)
-    | FImp psi1 psi2 => (prop_in_formula phi psi1) \/ (prop_in_formula phi psi2)
-    | FNeg psi' => (prop_in_formula phi psi')
-    | FK a psi' => (prop_in_formula phi psi')
-    | FB a psi' => (prop_in_formula phi psi')
+    | SProp psi' => phi = psi'
+    | SAnd psi1 psi2 => (prop_in_schema phi psi1) \/ (prop_in_schema phi psi2)
+    | SOr psi1 psi2 => (prop_in_schema phi psi1) \/ (prop_in_schema phi psi2)
+    | SImp psi1 psi2 => (prop_in_schema phi psi1) \/ (prop_in_schema phi psi2)
+    | SNeg psi' => (prop_in_schema phi psi')
+    | SK a psi' => (prop_in_schema phi psi')
+    | SB a psi' => (prop_in_schema phi psi')
   end.
 
-Fixpoint share_prop_letter (phi psi : formula) {struct phi} : Prop :=
+Fixpoint share_prop_letter (phi psi : schema) {struct phi} : Prop :=
   match phi with
-    | FProp phi' => match psi with
-                      | FProp psi' => phi' = psi'
-                      | FAnd psi1 psi2 => (prop_in_formula phi' psi1) \/ (prop_in_formula phi' psi2)
-                      | FOr psi1 psi2 => (prop_in_formula phi' psi1) \/ (prop_in_formula phi' psi2)
-                      | FImp psi1 psi2 => (prop_in_formula phi' psi1) \/ (prop_in_formula phi' psi2)
-                      | FNeg psi' => (prop_in_formula phi' psi')
-                      | FK a psi' => (prop_in_formula phi' psi')
-                      | FB a psi' => (prop_in_formula phi' psi')
+    | SProp phi' => match psi with
+                      | SProp psi' => phi' = psi'
+                      | SAnd psi1 psi2 => (prop_in_schema phi' psi1) \/ (prop_in_schema phi' psi2)
+                      | SOr psi1 psi2 => (prop_in_schema phi' psi1) \/ (prop_in_schema phi' psi2)
+                      | SImp psi1 psi2 => (prop_in_schema phi' psi1) \/ (prop_in_schema phi' psi2)
+                      | SNeg psi' => (prop_in_schema phi' psi')
+                      | SK a psi' => (prop_in_schema phi' psi')
+                      | SB a psi' => (prop_in_schema phi' psi')
                     end
-    | FAnd phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
-    | FOr phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
-    | FImp phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
-    | FNeg phi' => (share_prop_letter phi' psi)
-    | FK a phi' => (share_prop_letter phi' psi)
-    | FB a phi' => (share_prop_letter phi' psi)
+    | SAnd phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
+    | SOr phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
+    | SImp phi1 phi2 => (share_prop_letter phi1 psi) \/ (share_prop_letter phi2 psi)
+    | SNeg phi' => (share_prop_letter phi' psi)
+    | SK a phi' => (share_prop_letter phi' psi)
+    | SB a phi' => (share_prop_letter phi' psi)
   end.
 
-Fixpoint sahlqvist_formula (phi : formula) : Prop :=
+Example shared_and : forall (p q : prop),
+share_prop_letter ((SProp p) &s& (SProp q)) (SProp p).
+Proof.
+intros. simpl. intuition.
+Qed.
+
+Example not_shared_and : forall (p q r : prop),
+p <> r /\ q <> r ->
+~ share_prop_letter ((SProp p) &s& (SProp q)) (SProp r).
+Proof.
+intros. unfold not. simpl. intuition.
+Qed.
+
+Theorem share_prop_letter_correct : forall (p q : prop),
+  share_prop_letter (SProp p) (SProp q) <->
+  p = q.
+Proof.
+intros. split; intros; simpl in H; auto.
+Qed.
+
+Fixpoint sahlqvist_formula (phi : schema) : Prop :=
   match phi with
-    | FProp phi'=> True
-    | FAnd phi1 phi2 => (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
-    | FOr phi1 phi2 => not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
-    | FImp phi1 phi2 => (sahlqvist_implication phi1 phi2)
-    | FNeg phi' => False
-    | FK a phi' => sahlqvist_formula phi'
-    | FB a phi' => sahlqvist_formula phi'
+    | SProp phi'=> True
+    | SAnd phi1 phi2 => (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
+    | SOr phi1 phi2 => not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
+    | SImp phi1 phi2 => (sahlqvist_implication phi1 phi2)
+    | SNeg phi' => False
+    | SK a phi' => sahlqvist_formula phi'
+    | SB a phi' => sahlqvist_formula phi'
   end.
 
 
 Lemma sahlqvist_antecedent_p_and_q : forall (p q : prop),
-  sahlqvist_antecedent (FAnd (FProp p) (FProp q)).
+  sahlqvist_antecedent (SAnd (SProp p) (SProp q)).
 Proof.
   intros. simpl; auto.
 Qed.  
@@ -440,7 +460,7 @@ Qed.
   end.
  *)
 Lemma K_T_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (FK a (FProp phi) =f=> (FProp phi)).
+  sahlqvist_formula (SK a (SProp phi) =s=> (SProp phi)).
 Proof.
   intros. simpl. unfold sahlqvist_implication; split; unfold positive_formula; simpl; intuition. 
 Qed.
@@ -455,7 +475,7 @@ Ltac sahlqvist_reduce := simpl; try (unfold sahlqvist_implication; split);
 Ltac not_sahlqvist := try (unfold sahlqvist_formula; unfold sahlqvist_implication; simpl; intuition).
 
 Lemma B_Serial_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (FB a (FProp phi) =f=> \ (FB a (\ FProp phi))).
+  sahlqvist_formula (SB a (SProp phi) =s=> \ (SB a (\ SProp phi))).
 Proof.
   intros; sahlqvist_reduce.
 Qed.
@@ -463,7 +483,7 @@ Qed.
 Hint Resolve B_Serial_is_sahlqvist.
 
 Lemma B_5_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (\ (FB a (\ FB a (FProp phi))) =f=> (FB a (FProp phi))).
+  sahlqvist_formula (\ (SB a (\ SB a (SProp phi))) =s=> (SB a (SProp phi))).
 Proof.
 intros; sahlqvist_reduce. 
 Qed.
@@ -471,13 +491,13 @@ Qed.
 Hint Resolve B_5_is_sahlqvist.
 
 Example Lob_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  ~ sahlqvist_formula (FK a (FK a (FProp phi) =f=> (FProp phi)) =f=> FK a (FProp phi)).
+  ~ sahlqvist_formula (SK a (SK a (SProp phi) =s=> (SProp phi)) =s=> SK a (SProp phi)).
 Proof.
 intros. unfold not. not_sahlqvist. 
 Qed.
 
 Lemma K_B_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (FK a (FProp phi) =f=> FB a (FProp phi)).
+  sahlqvist_formula (SK a (SProp phi) =s=> SB a (SProp phi)).
 Proof.
   intros; sahlqvist_reduce.
 Qed.
@@ -485,7 +505,7 @@ Qed.
 Hint Resolve K_B_is_sahlqvist.
 
 Lemma B_BK_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (FB a (FProp phi) =f=> FB a (FK a (FProp phi))).
+  sahlqvist_formula (SB a (SProp phi) =s=> SB a (SK a (SProp phi))).
 Proof.
   intros; sahlqvist_reduce.
 Qed.
@@ -493,7 +513,7 @@ Qed.
 Hint Resolve B_BK_is_sahlqvist.
 
 (* Lemma Hilbert_K_is_sahlqvist : forall (p q : prop) (a : DASL.Agents),
-  sahlqvist_formula (normal_form ((FProp p) =f=> (FProp q) =f=> (FProp p))).
+  sahlqvist_formula (normal_form ((SProp p) =s=> (SProp q) =s=> (SProp p))).
 Proof.
   intros. simpl; auto.
 Qed.
@@ -501,9 +521,9 @@ Qed.
 Hint Resolve Hilbert_K_is_sahlqvist. 
 
 Lemma Hilbert_S_is_sahlqvist : forall (p q r : prop),
-  sahlqvist_formula (normal_form (((FProp p) =f=> (FProp q) =f=> (FProp r)) =f=>
-                    ((FProp p) =f=> (FProp q)) =f=>
-                    ((FProp p) =f=> (FProp r)))).
+  sahlqvist_formula (normal_form (((SProp p) =s=> (SProp q) =s=> (SProp r)) =s=>
+                    ((SProp p) =s=> (SProp q)) =s=>
+                    ((SProp p) =s=> (SProp r)))).
 Proof.
 intros. simpl; auto. 
 Qed. 
@@ -511,13 +531,13 @@ Qed.
 Hint Resolve Hilbert_S_is_sahlqvist. *)
 
 Example McKinsey_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  ~ sahlqvist_formula (FK a (FNeg (FK a (FNeg (FProp phi)))) =f=> FNeg (FK a (FNeg (FK a (FProp phi))))).
+  ~ sahlqvist_formula (SK a (SNeg (SK a (SNeg (SProp phi)))) =s=> SNeg (SK a (SNeg (SK a (SProp phi))))).
 Proof.
 intros; not_sahlqvist.  
 Qed.
 
 Lemma Classic_NOTNOT_is_sahlqvist : forall (p : prop),
-  sahlqvist_formula (FNeg (FNeg (FProp p)) =f=> (FProp p)).
+  sahlqvist_formula (SNeg (SNeg (SProp p)) =s=> (SProp p)).
 Proof.
 intros; sahlqvist_reduce. 
 Qed.
@@ -525,88 +545,88 @@ Qed.
 Hint Resolve Classic_NOTNOT_is_sahlqvist.
 
 Example Church_Rosser_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (\ (FK a (\ (FK a (FProp phi)))) =f=> (FK a (\ (FK a (\ (FProp phi)))))).
+  sahlqvist_formula (\ (SK a (\ (SK a (SProp phi)))) =s=> (SK a (\ (SK a (\ (SProp phi)))))).
 Proof.
   intros; sahlqvist_reduce.
 Qed.
 
 Example Brouwer_is_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula ((FProp phi) =f=> \ (FK a (\ (FK a (FProp phi))))).
+  sahlqvist_formula ((SProp phi) =s=> \ (SK a (\ (SK a (SProp phi))))).
 Proof.
   intros; sahlqvist_reduce.
 Qed.
 
 Example Brouwer_is_not_sahlqvist : forall (phi : prop) (a : DASL.Agents),
-  ~ ( sahlqvist_formula ((FProp phi) =f=> \ (FK a (\ (FK a (FProp phi))))) ).
+  ~ ( sahlqvist_formula ((SProp phi) =s=> \ (SK a (\ (SK a (SProp phi))))) ).
 Proof.
 intros; not_sahlqvist. Abort.
 
 Example Very_simple_Blackburn: forall (p : prop) (a : DASL.Agents),
-  sahlqvist_formula (((FProp p) &&& (\ (FK a (\ (\ (FK a (\ (FProp p)))))))) =f=>
-    (\ (FK a (\ (FProp p))))).
+  sahlqvist_formula (((SProp p) &s& (\ (SK a (\ (\ (SK a (\ (SProp p)))))))) =s=>
+    (\ (SK a (\ (SProp p))))).
 Proof.
 intros; sahlqvist_reduce. 
 Qed.
 
 Example sahlqvist_Blackburn_example_1 : forall (phi : prop) (a : DASL.Agents),
-  sahlqvist_formula (FK a ((FProp phi) =f=> (\ (FK a (\ (FProp phi)))))).
+  sahlqvist_formula (SK a ((SProp phi) =s=> (\ (SK a (\ (SProp phi)))))).
 Proof.
   intros; sahlqvist_reduce. 
 Qed.
 
-Fixpoint form_to_prop (phi : formula) : prop :=
+Fixpoint form_to_prop (phi : schema) : prop :=
   match phi with
-  | FProp phi' => phi'
-  | FAnd phi1 phi2 => (form_to_prop phi1) & (form_to_prop phi2)
-  | FOr phi1 phi2 => (form_to_prop phi1) V (form_to_prop phi2)
-  | FImp phi1 phi2 => (form_to_prop phi1) ==> (form_to_prop phi2)
-  | FNeg phi' => ! (form_to_prop phi')
-  | FK a phi' => K a (form_to_prop phi')
-  | FB a phi' => B a (form_to_prop phi')
+  | SProp phi' => phi'
+  | SAnd phi1 phi2 => (form_to_prop phi1) & (form_to_prop phi2)
+  | SOr phi1 phi2 => (form_to_prop phi1) V (form_to_prop phi2)
+  | SImp phi1 phi2 => (form_to_prop phi1) ==> (form_to_prop phi2)
+  | SNeg phi' => ! (form_to_prop phi')
+  | SK a phi' => K a (form_to_prop phi')
+  | SB a phi' => B a (form_to_prop phi')
   end.
 
-Fixpoint prop_to_form (phi : prop) : formula :=
+Fixpoint prop_to_form (phi : prop) : schema :=
   match phi with
-  | _|_ => FProp (_|_)
-  | (atm atom) => FProp (atm atom)
-  | (imp phi1 phi2) => (prop_to_form phi1) =f=> (prop_to_form phi2)
-  | (negp phi') => FNeg (prop_to_form phi')
-  | (K a phi') => FK a (prop_to_form phi')
-  | (B a phi') => FB a (prop_to_form phi')
+  | _|_ => SProp (_|_)
+  | (atm atom) => SProp (atm atom)
+  | (imp phi1 phi2) => (prop_to_form phi1) =s=> (prop_to_form phi2)
+  | (negp phi') => SNeg (prop_to_form phi')
+  | (K a phi') => SK a (prop_to_form phi')
+  | (B a phi') => SB a (prop_to_form phi')
   end.
 
 
-Inductive Ftheorem : formula -> Prop :=
-   |FHilbert_K: forall p q : prop, Ftheorem ((FProp p) =f=> (FProp q) =f=> (FProp p))
-   |FHilbert_S: forall p q r : prop, Ftheorem (((FProp p)=f=>(FProp q)=f=>(FProp r))=f=>((FProp p)=f=>(FProp q))=f=>((FProp p)=f=>(FProp r)))
-   |FClassic_NOTNOT : forall p : prop, Ftheorem ((\ (\ (FProp p))) =f=> (FProp p))
-   |FMP : forall p q : prop, Ftheorem ((FProp p) =f=> (FProp q)) -> Ftheorem (FProp p) -> Ftheorem (FProp q)
-   |FK_Nec : forall (a : DASL.Agents) (p : prop), Ftheorem (FProp p) -> Ftheorem (FK a (FProp p))
-   |FK_K : forall (a : DASL.Agents) (p q : prop), Ftheorem (FK a (FProp p) =f=> FK a ((FProp p) =f=> (FProp q)) =f=> FK a (FProp q))
-   |FK_T : forall (a : DASL.Agents) (p : prop), Ftheorem (FK a (FProp p) =f=> (FProp p))
-   |FB_K : forall (a : DASL.Agents) (p q : prop), Ftheorem (FB a (FProp p) =f=> FB a ((FProp p) =f=> (FProp q)) =f=> FB a (FProp q))
-   |FB_Serial : forall (a : DASL.Agents) (p : prop), Ftheorem (FB a (FProp p) =f=> \ (FB a (\ (FProp p))))
-   |FB_5 : forall (a : DASL.Agents) (p : prop), Ftheorem (\ (FB a (FProp p)) =f=> FB a (\ (FB a (FProp p))))
-   |FK_B : forall (a : DASL.Agents) (p : prop), Ftheorem (FK a (FProp p) =f=> FB a (FProp p))
-   |FB_BK : forall (a : DASL.Agents) (p : prop), Ftheorem (FB a (FProp p) =f=> FB a (FK a (FProp p))).
+Inductive Stheorem : schema -> Prop :=
+   |SHilbert_K: forall p q : prop, Stheorem ((SProp p) =s=> (SProp q) =s=> (SProp p))
+   |SHilbert_S: forall p q r : prop, Stheorem (((SProp p)=s=>(SProp q)=s=>(SProp r))=s=>((SProp p)=s=>(SProp q))=s=>((SProp p)=s=>(SProp r)))
+   |SClassic_NOTNOT : forall p : prop, Stheorem ((\ (\ (SProp p))) =s=> (SProp p))
+   |SMP : forall p q : prop, Stheorem ((SProp p) =s=> (SProp q)) -> Stheorem (SProp p) -> Stheorem (SProp q)
+   |SK_Nec : forall (a : DASL.Agents) (p : prop), Stheorem (SProp p) -> Stheorem (SK a (SProp p))
+   |SK_K : forall (a : DASL.Agents) (p q : prop), Stheorem (SK a (SProp p) =s=> SK a ((SProp p) =s=> (SProp q)) =s=> SK a (SProp q))
+   |SK_T : forall (a : DASL.Agents) (p : prop), Stheorem (SK a (SProp p) =s=> (SProp p))
+   |SB_K : forall (a : DASL.Agents) (p q : prop), Stheorem (SB a (SProp p) =s=> SB a ((SProp p) =s=> (SProp q)) =s=> SB a (SProp q))
+   |SB_Serial : forall (a : DASL.Agents) (p : prop), Stheorem (SB a (SProp p) =s=> \ (SB a (\ (SProp p))))
+   |SB_5 : forall (a : DASL.Agents) (p : prop), Stheorem (\ (SB a (SProp p)) =s=> SB a (\ (SB a (SProp p))))
+   |SK_B : forall (a : DASL.Agents) (p : prop), Stheorem (SK a (SProp p) =s=> SB a (SProp p))
+   |SB_BK : forall (a : DASL.Agents) (p : prop), Stheorem (SB a (SProp p) =s=> SB a (SK a (SProp p))).
 
-Notation "|f-" := Ftheorem (at level 80).
+Notation "|s-" := Stheorem (at level 80).
 Check Build_frame.
 Check frame.
 
 
 Definition DASL_Axioms (p q r : prop) (a : DASL.Agents) := 
-(FK a (FProp p) =f=> FK a ((FProp p) =f=> (FProp q)) =f=> FK a (FProp q))
-:: (FK a (FProp p) =f=> (FProp p))
-:: (FB a (FProp p) =f=> FB a ((FProp p) =f=> (FProp q)) =f=> FB a (FProp q))
-:: (FB a (FProp p) =f=> \ (FB a (\ (FProp p))))
-:: (\ (FB a (\ (FB a (FProp p)))) =f=> FB a (FProp p))
-:: (FK a (FProp p) =f=> FB a (FProp p))
-:: (FB a (FProp p) =f=> FB a (FK a (FProp p)))
+(SK a (SProp p) =s=> SK a ((SProp p) =s=> (SProp q)) =s=> SK a (SProp q))
+:: (SK a (SProp p) =s=> (SProp p))
+:: (SB a (SProp p) =s=> SB a ((SProp p) =s=> (SProp q)) =s=> SB a (SProp q))
+:: (SB a (SProp p) =s=> \ (SB a (\ (SProp p))))
+:: (\ (SB a (\ (SB a (SProp p)))) =s=> SB a (SProp p))
+:: (SK a (SProp p) =s=> SB a (SProp p))
+:: (SB a (SProp p) =s=> SB a (SK a (SProp p)))
 :: nil.
 
 
-Fixpoint Complete_via_Sahlqvist (l : list formula) : Prop :=  
+Fixpoint Complete_via_Sahlqvist (l : list schema) : Prop :=  
   match l with
   | nil => True
   | (l' :: els) => sahlqvist_formula (l') /\ Complete_via_Sahlqvist (els)
@@ -628,19 +648,19 @@ Proof.
 intros; sahlqvist_complete_list.
 Qed.
 
-Lemma schema_to_prop_completeness : forall (phi : formula),
-  |f- phi ->
+Lemma schema_to_prop_completeness : forall (phi : schema),
+  |s- phi ->
   |-- form_to_prop phi.
 Proof.
 intros.
 induction H; simpl; try constructor.
-simpl in IHFtheorem1.
-simpl in IHFtheorem2. pose proof MP p q IHFtheorem1; auto.
-simpl in IHFtheorem; auto.
+simpl in IHStheorem1.
+simpl in IHStheorem2. pose proof MP p q IHStheorem1; auto.
+simpl in IHStheorem; auto.
 Qed.
 
-Theorem DASL_Completeness : forall (phi : formula) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
+Theorem DASL_Completeness : forall (phi : schema) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
   DASL_Frame F ->  
   F ||= (form_to_prop) phi ->
-  |f- phi.
+  |s- phi.
 Proof. Abort.
