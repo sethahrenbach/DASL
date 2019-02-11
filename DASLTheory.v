@@ -306,6 +306,14 @@ Infix "|s|" := SOr (right associativity, at level 75).
 
 Infix "&s&" := SAnd (right associativity, at level 75).
 
+Axiom and_simp_left : forall (phi1 phi2 : prop) (F : frame),
+  F ||= (phi1 & phi2) ->
+  F ||= phi1.
+
+Axiom and_simp_right : forall (phi1 phi2 : prop) (F : frame),
+  F ||= (phi1 & phi2) ->
+  F ||= phi2.
+
 Fixpoint normal_form (phi : schema) : schema :=
   match phi with
   | SProp phi'=> SProp phi'
@@ -435,9 +443,9 @@ Fixpoint sahlqvist_formula (phi : schema) : Prop :=
   match phi with
     | SProp phi'=> True
     | SAnd phi1 phi2 => (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
-    | SOr phi1 phi2 => not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
+    | SOr phi1 phi2 => False (*not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2) *)
     | SImp phi1 phi2 => (sahlqvist_implication phi1 phi2)
-    | SNeg phi' => False
+    | SNeg phi' => ~ (positive_formula phi')
     | SK a phi' => sahlqvist_formula phi'
     | SB a phi' => sahlqvist_formula phi'
   end.
@@ -574,25 +582,25 @@ Proof.
   intros; sahlqvist_reduce. 
 Qed.
 
-Fixpoint form_to_prop (phi : schema) : prop :=
+Fixpoint schema_to_prop (phi : schema) : prop :=
   match phi with
   | SProp phi' => phi'
-  | SAnd phi1 phi2 => (form_to_prop phi1) & (form_to_prop phi2)
-  | SOr phi1 phi2 => (form_to_prop phi1) V (form_to_prop phi2)
-  | SImp phi1 phi2 => (form_to_prop phi1) ==> (form_to_prop phi2)
-  | SNeg phi' => ! (form_to_prop phi')
-  | SK a phi' => K a (form_to_prop phi')
-  | SB a phi' => B a (form_to_prop phi')
+  | SAnd phi1 phi2 => (schema_to_prop phi1) & (schema_to_prop phi2)
+  | SOr phi1 phi2 => (schema_to_prop phi1) V (schema_to_prop phi2)
+  | SImp phi1 phi2 => (schema_to_prop phi1) ==> (schema_to_prop phi2)
+  | SNeg phi' => ! (schema_to_prop phi')
+  | SK a phi' => K a (schema_to_prop phi')
+  | SB a phi' => B a (schema_to_prop phi')
   end.
 
-Fixpoint prop_to_form (phi : prop) : schema :=
+Fixpoint prop_to_schema (phi : prop) : schema :=
   match phi with
   | _|_ => SProp (_|_)
   | (atm atom) => SProp (atm atom)
-  | (imp phi1 phi2) => (prop_to_form phi1) =s=> (prop_to_form phi2)
-  | (negp phi') => SNeg (prop_to_form phi')
-  | (K a phi') => SK a (prop_to_form phi')
-  | (B a phi') => SB a (prop_to_form phi')
+  | (imp phi1 phi2) => (prop_to_schema phi1) =s=> (prop_to_schema phi2)
+  | (negp phi') => SNeg (prop_to_schema phi')
+  | (K a phi') => SK a (prop_to_schema phi')
+  | (B a phi') => SB a (prop_to_schema phi')
   end.
 
 
@@ -633,11 +641,12 @@ Fixpoint Complete_via_Sahlqvist (l : list schema) : Prop :=
   end.
 
 
-Axiom sahlqvist_is_canonical : forall (phi : prop),
-  sahlqvist_formula (prop_to_form phi) ->
-  (forall F: frame,
-    F ||= phi ->
-    |-- phi).
+Axiom sahlqvist_is_canonical : forall (phi : prop) (F1 F2 : frame),
+  sahlqvist_formula (prop_to_schema phi) ->
+    (F1 ||= phi <->
+    |s- (prop_to_schema phi)) /\ 
+    (F2 ||= phi <-> F2 = F1).
+
 
 Ltac sahlqvist_complete_list :=
   match goal with [ |- ?P1 (?P2 _ _ _ _) ] => unfold P2; repeat (constructor; auto; sahlqvist_reduce) end.
@@ -650,7 +659,7 @@ Qed.
 
 Lemma schema_to_prop_completeness : forall (phi : schema),
   |s- phi ->
-  |-- form_to_prop phi.
+  |-- schema_to_prop phi.
 Proof.
 intros.
 induction H; simpl; try constructor.
@@ -659,8 +668,50 @@ simpl in IHStheorem2. pose proof MP p q IHStheorem1; auto.
 simpl in IHStheorem; auto.
 Qed.
 
-Theorem DASL_Completeness : forall (phi : schema) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
+Theorem DASL_Completeness : forall (phi : prop) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
   DASL_Frame F ->  
-  F ||= (form_to_prop) phi ->
-  |s- phi.
-Proof. Abort.
+  F ||= phi ->
+  |s- (prop_to_schema phi).
+Proof.
+intros. pose proof sahlqvist_is_canonical phi. 
+pose proof H1 F0 F0. destruct H2. Focus 2. rewrite <- H2; assumption.
+pose proof H1 F0 F0. unfold Frame_validity in H0. pose proof H0 val a; fold Frame_validity in H0.
+unfold Model_satisfies in H3. unfold DASL_Frame in H.
+destruct H. pose proof K_is_refl phi F0 a H.
+
+
+_______________
+induction phi; unfold prop_to_schema; simpl; fold prop_to_schema; auto.
+Focus 2. simpl. fold prop_to_schema.
+unfold  not. intros. induction phi.
+
+fold prop_to_schema.
+unfold sahlqvist_implication.
+split. apply IHphi1. induction phi1; simpl; auto. 
+Focus 2. 
+
+
+intro (K a phi ==> phi).
+unfold prop_to_schema. pose proof DASL_Soundness phi F0 a.
+
+ unfold schema_to_prop in H5. simpl in H5. fold schema_to_prop in H5.
+unfold sahlqvist_formula.
+induction H2.
+pose proof sahlqvist_unique phi F0. destruct H1. Focus 2.
+
+
+induction phi;
+try (destruct H1; simpl; auto).
+  rewrite <- H1. destruct H1. pose proof sahlqvist_unique (SProp p) F0 x.
+auto.
+  destruct H1. Focus 2. generalize H1. generalize x. destruct H1 with (F := F0). induction phi.
+unfold sahlqvist_formula; simpl; intuition.
+simpl in H0. 
+pose proof and_simp_left (schema_to_prop phi1) (schema_to_prop phi2) F0 H0.
+pose proof IHphi1 H1.
+pose proof and_simp_right (schema_to_prop phi1) (schema_to_prop phi2) F0 H0.
+pose proof IHphi2 H3.
+unfold sahlqvist_formula. simpl. fold sahlqvist_formula. split; assumption.
+
+unfold sahlqvist_formula. simpl. fold sahlqvist_formula. unfold schema_to_prop in H0. simpl in H0. fold schema_to_prop in H0.
+split. unfold share_prop_letter. induction phi1; induction phi2; simpl. 
