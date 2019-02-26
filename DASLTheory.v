@@ -685,46 +685,4 @@ Theorem DASL_Completeness : forall (phi : schema) (F : frame) (val: (W F) -> Ato
   F ||= (schema_to_prop phi) ->
   |-- (schema_to_prop phi).
 Proof.
-intros. pose proof sahlqvist_is_canonical phi. 
-pose proof H1 F0 F0. destruct H2. Focus 2. rewrite <- H2; assumption.
-pose proof H1 F0 F0. unfold Frame_validity in H0. pose proof H0 val a; fold Frame_validity in H0.
-unfold Model_satisfies in H3. unfold DASL_Frame in H.
-destruct H. pose proof K_is_refl (schema_to_prop phi) F0 a H.
-induction (schema_to_prop phi). unfold sahlqvist_formula.
-
-
-_______________
-induction phi; unfold prop_to_schema; simpl; fold prop_to_schema; auto.
-Focus 2. simpl. fold prop_to_schema.
-unfold  not. intros. induction phi.
-
-fold prop_to_schema.
-unfold sahlqvist_implication.
-split. apply IHphi1. induction phi1; simpl; auto. 
-Focus 2. 
-
-
-intro (K a phi ==> phi).
-unfold prop_to_schema. pose proof DASL_Soundness phi F0 a.
-
- unfold schema_to_prop in H5. simpl in H5. fold schema_to_prop in H5.
-unfold sahlqvist_formula.
-induction H2.
-pose proof sahlqvist_unique phi F0. destruct H1. Focus 2.
-
-
-induction phi;
-try (destruct H1; simpl; auto).
-  rewrite <- H1. destruct H1. pose proof sahlqvist_unique (SProp p) F0 x.
-auto.
-  destruct H1. Focus 2. generalize H1. generalize x. destruct H1 with (F := F0). induction phi.
-unfold sahlqvist_formula; simpl; intuition.
-simpl in H0. 
-pose proof and_simp_left (schema_to_prop phi1) (schema_to_prop phi2) F0 H0.
-pose proof IHphi1 H1.
-pose proof and_simp_right (schema_to_prop phi1) (schema_to_prop phi2) F0 H0.
-pose proof IHphi2 H3.
-unfold sahlqvist_formula. simpl. fold sahlqvist_formula. split; assumption.
-
-unfold sahlqvist_formula. simpl. fold sahlqvist_formula. unfold schema_to_prop in H0. simpl in H0. fold schema_to_prop in H0.
-split. unfold share_prop_letter. induction phi1; induction phi2; simpl. 
+Abort.
