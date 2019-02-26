@@ -443,7 +443,7 @@ Fixpoint sahlqvist_formula (phi : schema) : Prop :=
   match phi with
     | SProp phi'=> True
     | SAnd phi1 phi2 => (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
-    | SOr phi1 phi2 => False (*not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2) *)
+    | SOr phi1 phi2 => not (share_prop_letter phi1 phi2) /\ (sahlqvist_formula phi1) /\ (sahlqvist_formula phi2)
     | SImp phi1 phi2 => (sahlqvist_implication phi1 phi2)
     | SNeg phi' => ~ (positive_formula phi')
     | SK a phi' => sahlqvist_formula phi'
@@ -641,11 +641,11 @@ Fixpoint Complete_via_Sahlqvist (l : list schema) : Prop :=
   end.
 
 
-Axiom sahlqvist_is_canonical : forall (phi : prop) (F1 F2 : frame),
-  sahlqvist_formula (prop_to_schema phi) ->
-    (F1 ||= phi <->
-    |s- (prop_to_schema phi)) /\ 
-    (F2 ||= phi <-> F2 = F1).
+Axiom sahlqvist_is_canonical : forall (phi : schema) (F1 F2 : frame),
+  sahlqvist_formula phi ->
+    (F1 ||= (schema_to_prop phi) <->
+    |-- (schema_to_prop phi)) /\ 
+    (F2 ||= (schema_to_prop phi) <-> F2 = F1).
 
 
 Ltac sahlqvist_complete_list :=
@@ -668,16 +668,29 @@ simpl in IHStheorem2. pose proof MP p q IHStheorem1; auto.
 simpl in IHStheorem; auto.
 Qed.
 
-Theorem DASL_Completeness : forall (phi : prop) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
+Lemma prop_to_schema_completeness : forall (phi : schema),
+  |-- schema_to_prop phi ->
+  |s- phi.
+Proof.
+intros. induction phi. simpl in H. induction H. Focus 7. simpl. induction p; simpl. Abort.
+
+Theorem weak_evidential_restraint_not_sahlqvist:  forall (phi : prop) (a : DASL.Agents),
+   (sahlqvist_formula (SB a (SProp phi) =s=> (\ (SK a (\ (SK a (SProp phi))))))).
+Proof.
+  intros; sahlqvist_reduce. 
+Qed.
+
+Theorem DASL_Completeness : forall (phi : schema) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
   DASL_Frame F ->  
-  F ||= phi ->
-  |s- (prop_to_schema phi).
+  F ||= (schema_to_prop phi) ->
+  |-- (schema_to_prop phi).
 Proof.
 intros. pose proof sahlqvist_is_canonical phi. 
 pose proof H1 F0 F0. destruct H2. Focus 2. rewrite <- H2; assumption.
 pose proof H1 F0 F0. unfold Frame_validity in H0. pose proof H0 val a; fold Frame_validity in H0.
 unfold Model_satisfies in H3. unfold DASL_Frame in H.
-destruct H. pose proof K_is_refl phi F0 a H.
+destruct H. pose proof K_is_refl (schema_to_prop phi) F0 a H.
+induction (schema_to_prop phi). unfold sahlqvist_formula.
 
 
 _______________
