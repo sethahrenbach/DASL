@@ -1,4 +1,3 @@
-Add LoadPath "/Users/sethahrenbach/DASL".
 Require Import DASL List.
 
 Definition negb (b:bool) : bool := 
@@ -20,6 +19,7 @@ Definition orb (b1:bool) (b2:bool) : bool :=
   end.
 
 (* This is heavily inspired by Paulien de Wind's M.Sc. Thesis: "Modal Logic in Coq", University of Amsterdam, 2001.
+And the work of Pierre Lescanne, which can be found here: http://perso.ens-lyon.fr/pierre.lescanne/COQ/
  *)
 
 Record frame : Type := {

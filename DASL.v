@@ -1,4 +1,3 @@
-Add LoadPath "/Users/sethahrenbach/DASL".
 Require Import List.
 
 
