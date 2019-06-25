@@ -680,6 +680,49 @@ Proof.
   intros; sahlqvist_reduce. 
 Qed.
 
+Inductive Translation (F : frame) : Prop :=
+  | TPred (n : W F) (p : prop)
+  | TBot (c : Prop)
+  | TNeg (t : Translation F)
+  | TOr (t1 t2 : Translation F)
+  | TBox (R : W F) (a : DASL.Agents) (n v : W F) (p : prop).
+
+Check Translation.
+
+Notation "ST[ x phi ]" := (Translation (x: nat) (phi : prop)) (at level 80).
+
+Fixpoint standard_translation (p : prop) (x : nat) (F : frame) : Prop :=
+  match p with
+  | atm _ p => TPred x p
+  | falsum => x != x
+  | negp p' =>  TNeg (standard_translation p')
+  | imp p1 p2 => TOr (standard_translation(negp p1)) (standard_translation p2)
+  | K _ p' => 
+              
+
+(* 
+Definition serial_Rb_frame (F : frame) : Prop := 
+  forall (w : (W F)) (ags : DASL.Agents), 
+    exists (y : (W F)), (Rb F ags w y).
+
+Inductive prop : Type :=
+   | atm : Atoms -> prop
+   | imp : prop -> prop -> prop
+   | negp : prop -> prop
+   | falsum : prop
+   | K : Agents -> prop -> prop
+   | B : Agents -> prop -> prop.
+Schema
+  | SProp : prop -> schema
+  | SAnd : schema -> schema -> schema
+  | SOr : schema -> schema -> schema
+  | SImp : schema -> schema -> schema
+  | SNeg : schema -> schema
+  | SK : DASL.Agents -> schema -> schema
+  | SB : DASL.Agents -> schema -> schema.
+*)
+
+
 Theorem DASL_Completeness : forall (phi : schema) (F : frame) (val: (W F) -> Atoms -> Prop) (a : DASL.Agents),
   DASL_Frame F ->  
   F ||= (schema_to_prop phi) ->
