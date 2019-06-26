@@ -680,24 +680,37 @@ Proof.
   intros; sahlqvist_reduce. 
 Qed.
 
-Inductive Translation (F : frame) : Prop :=
-  | TPred (n : W F) (p : prop)
-  | TBot (c : Prop)
-  | TNeg (t : Translation F)
-  | TOr (t1 t2 : Translation F)
-  | TBox (R : W F) (a : DASL.Agents) (n v : W F) (p : prop).
+Definition KDiamond (phi : schema) (a : DASL.Agents) :=
+  SNeg (SK a (SNeg phi)).
+Hint Resolve KDiamond.
+Notation "<K>" := KDiamond.
 
-Check Translation.
-
-Notation "ST[ x phi ]" := (Translation (x: nat) (phi : prop)) (at level 80).
-
-Fixpoint standard_translation (p : prop) (x : nat) (F : frame) : Prop :=
+Fixpoint standard_translation (p : schema) (M : model) (x : W (F M)) {struct p} : Prop :=
   match p with
-  | atm _ p => TPred x p
-  | falsum => x != x
-  | negp p' =>  TNeg (standard_translation p')
-  | imp p1 p2 => TOr (standard_translation(negp p1)) (standard_translation p2)
-  | K _ p' => 
+  | SProp p' => satisfies M x p'
+  | SAnd p1 p2 => (standard_translation p1 M x) /\ (standard_translation p2 M x)
+  | SOr p1 p2 =>  (standard_translation p1 M x) \/ (standard_translation p2 M x)
+  | SImp p1 p2 => ~(standard_translation p1 M x) \/ (standard_translation p2 M x)
+  | SNeg p' => ~(standard_translation p' M x)  
+  | SK a p' => forall (y : W (F M)), (Rk (F M) a x y) -> (standard_translation p' M y)
+  | SB a p' => forall (y : W (F M)), (Rb (F M) a x y) -> (standard_translation p' M y)
+  end.
+
+Example T_Refl : forall (phi : prop) (M : model) (x : W (F M)) (a : DASL.Agents),
+  standard_translation ((SK a (SProp phi)) =s=> (SProp phi)) M x
+= ~(forall (y : W (F M)), (Rk (F M) a x y) -> satisfies M y phi)
+   \/ (satisfies M x phi).
+Proof.
+intros. simpl. reflexivity.
+Qed.
+
+Example T_Refl' : forall (phi : prop) (M : model) (x : W (F M)) (a : DASL.Agents),
+  standard_translation ((SK a (SProp phi)) =s=> (SProp phi)) M x
+= reflexive_Rk_frame (F M).
+Proof.
+intros. simpl. unfold reflexive_Rk_frame.
+unfold not. unfold satisfies.
+intuition. 
               
 
 (* 
