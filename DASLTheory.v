@@ -674,8 +674,8 @@ Lemma prop_to_schema_completeness : forall (phi : schema),
 Proof.
 intros. induction phi. simpl in H. induction H. Focus 7. simpl. induction p; simpl. Abort.
 
-Theorem weak_evidential_restraint_not_sahlqvist:  forall (phi : prop) (a : DASL.Agents),
-   (sahlqvist_formula (SB a (SProp phi) =s=> (\ (SK a (\ (SK a (SProp phi))))))).
+Theorem weak_subjective_evidential_restraint_not_sahlqvist:  forall (phi : prop) (a : DASL.Agents),
+   (sahlqvist_formula (SB a (SProp phi) =s=> (\ (SB a (\ (SK a (SProp phi))))))).
 Proof.
   intros; sahlqvist_reduce. 
 Qed.
@@ -704,12 +704,20 @@ Proof.
 intros. simpl. reflexivity.
 Qed.
 
+Example Blackburn_ST_Example_1 : forall (phi psi : prop) (M : model) (x : W (F M)) (a : DASL.Agents),
+  standard_translation (\ (SK a (\ ((SK a (SProp phi) =s=> (SProp psi)))))) M x
+= exists (y : W (F M)), ((Rk (F M) a x y) /\ 
+  ~ (forall (y0 : W (F M)), (~ (Rk (F M) a y y0) \/ satisfies M y0 phi) \/ satisfies M y psi)).
+Proof.
+intros phi psi M x a. simpl. simpl. intuition. reflexivity. unfold standard_translation.
+
 Example T_Refl' : forall (phi : prop) (M : model) (x : W (F M)) (a : DASL.Agents),
   standard_translation ((SK a (SProp phi)) =s=> (SProp phi)) M x
-= reflexive_Rk_frame (F M).
+-> reflexive_Rk_frame (F M).
 Proof.
-intros. simpl. unfold reflexive_Rk_frame.
-unfold not. unfold satisfies.
+unfold reflexive_Rk_frame. intros. unfold standard_translation in H. destruct H.
+(*    Left *)
+  unfold not in H. contradiction H. intros. unfold satisfies in H. simpl in H.
 intuition. 
               
 
